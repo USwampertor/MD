@@ -30,6 +30,46 @@ namespace MD
            Utils::isNearSame(m_a, other.m_a);
   }
 
+  Color
+  Color::operator*(const Color& other) const {
+    return Color(this->m_r * other.m_r,
+                 this->m_g * other.m_g,
+                 this->m_b * other.m_b,
+                 this->m_a * other.m_a);
+  }
+
+  Color
+  Color::operator*(const float& other) const {
+    return Color(this->m_r * other,
+                 this->m_g * other,
+                 this->m_b * other,
+                 this->m_a * other);
+  }
+
+  Color
+  Color::operator/(const float& other) const {
+    return Color(this->m_r / other,
+                 this->m_g / other,
+                 this->m_b / other,
+                 this->m_a / other);
+  }
+
+  Color
+  Color::operator+(const Color& other) const {
+    return Color(this->m_r + other.m_r,
+                 this->m_g + other.m_g,
+                 this->m_b + other.m_b,
+                 this->m_a + other.m_a);
+  }
+
+  Color
+  Color::operator-(const Color& other) const {
+    return Color(this->m_r - other.m_r,
+                 this->m_g - other.m_g,
+                 this->m_b - other.m_b,
+                 this->m_a - other.m_a);
+  }
+
   void
   Color::setFloat(const float& nr, 
                   const float& ng, 
@@ -58,6 +98,14 @@ namespace MD
     m_a = std::clamp(static_cast<uint32_t>(na), 
                      static_cast<uint32_t>(0), 
                      static_cast<uint32_t>(255)) * Color::Int2Linear;
+  }
+
+  void
+  Color::saturate() {
+    m_r = m_r > 1.0f ? 1.0f : m_r;
+    m_g = m_g > 1.0f ? 1.0f : m_g;
+    m_b = m_b > 1.0f ? 1.0f : m_b;
+    m_a = m_a > 1.0f ? 1.0f : m_a;
   }
 
   String

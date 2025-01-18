@@ -53,8 +53,8 @@ Image::bitBlt(const Image& src,
         float u = static_cast<float>(destx) / destRect.width;
         float v = static_cast<float>(desty) / destRect.height;
 
-        srcx = std::clamp(srcRect.x + static_cast<int>(u * srcRect.width), uint32_t(0), src.m_width - 1);
-        srcy = std::clamp(srcRect.y + static_cast<int>(v * srcRect.height), uint32_t(0), src.m_height - 1);
+        srcx = std::clamp(srcRect.x + static_cast<uint32_t>(u * srcRect.width - 1), uint32_t(0), src.m_width - 1);
+        srcy = std::clamp(srcRect.y + static_cast<uint32_t>(v * srcRect.height - 1), uint32_t(0), src.m_height - 1);
       }
 
       Pixel srcPixel = src.m_pixels[(srcy * srcRect.width) + (srcx)];
@@ -62,120 +62,6 @@ Image::bitBlt(const Image& src,
 
     }
   }
-
-  // if (eTextureMode::NONE == format) {
-  // 
-  //   Just copy it from src to dst in given rects
-  //   for (int y = 0; y < srcRect.height; ++y) {
-  //     for (int x = 0; x < srcRect.width; ++x) {
-  //   
-  //       if ((y + srcRect.y) < src.m_height && (x + srcRect.x) < src.m_width) {
-  //         
-  //         Pixel srcPixel = src.m_pixels[((y + srcRect.y) * srcRect.width) + (x + srcRect.x)];
-  //         
-  //         if ((y + destRect.y) < m_height && (x + destRect.x) < m_width) {
-  //           m_pixels[((y + destRect.y) * m_width) + (x + destRect.x)] = srcPixel;
-  //         }
-  //       }
-  //     }
-  //   }
-  // 
-  // 
-  // 
-  // 
-  // }
-  // else if (eTextureMode::REPEAT == format) {
-  // 
-  // 
-  //   for (uint32_t desty = 0; desty < destRect.height; ++desty) {
-  //     for (uint32_t destx = 0; destx < destRect.width; ++destx) {
-  // 
-  //       // porcentual del valor del tamaño de src
-  //       // i.e 65 % 50 de un destiny de 75, significa que es 16 px de source
-  //       
-  // 
-  //       uint32_t loopX = (srcRect.x + destx % src.m_width + srcRect.width) % (srcRect.width);
-  //       uint32_t loopY = (srcRect.y + desty % src.m_height + srcRect.height) % (srcRect.height);
-  // 
-  //       if (destRect.x + destx < 0 || 
-  //           destRect.x + destx >= m_width ||
-  //           destRect.y + desty < 0 ||
-  //           destRect.y + desty >= m_height) {
-  //         continue;  
-  //       }
-  // 
-  //       // TODO: Check when cuts are different
-  //       Pixel srcPixel = src.m_pixels[(loopY * srcRect.width) + (loopX)];
-  //       m_pixels[((desty + destRect.y) * m_width) + (destx + destRect.x)] = srcPixel;
-  //       
-  //     }
-  //   }
-  // 
-  // }
-  // else if (eTextureMode::CLAMP == format) {
-  //   for (uint32_t desty = 0; desty < destRect.height; ++desty) {
-  //     for (uint32_t destx = 0; destx < destRect.width; ++destx) {
-  // 
-  // 
-  // 
-  //       int srcx = std::clamp(srcRect.x + destx, uint32_t(0), src.m_width - 1);
-  //       int srcy = std::clamp(srcRect.y + desty, uint32_t(0), src.m_height - 1);
-  // 
-  //       if (destRect.x + destx < 0 || 
-  //           destRect.x + destx >= m_width ||
-  //           destRect.y + desty < 0 ||
-  //           destRect.y + desty >= m_height) {
-  //         continue;  
-  //       }
-  // 
-  //       Pixel srcPixel = src.m_pixels[srcy * src.m_width + srcx];
-  //       m_pixels[((desty + destRect.y) * m_width) + (destx + destRect.x)] = srcPixel;
-  //     }
-  //   }
-  // }
-  // else if (eTextureMode::MIRROR == format) {
-  //   for (uint32_t desty = 0; desty < destRect.height; ++desty) {
-  //     for (uint32_t destx = 0; destx < destRect.width; ++destx) {
-  // 
-  //       int srcx = mirrorCoord(srcRect.x + destx, src.m_width);
-  //       int srcy = mirrorCoord(srcRect.y + desty, src.m_height);
-  // 
-  //       if (destRect.x + destx < 0 ||
-  //           destRect.x + destx >= m_width ||
-  //           destRect.y + desty < 0 ||
-  //           destRect.y + desty >= m_height) {
-  //           continue;
-  //       }
-  // 
-  //       Pixel srcPixel = src.m_pixels[srcy * src.m_width + srcx];
-  //       m_pixels[((desty + destRect.y) * m_width) + (destx + destRect.x)] = srcPixel;
-  //     }
-  //   }
-  // }
-  // else if (eTextureMode::STRETCH == format) {
-  //   for (uint32_t desty = 0; desty < destRect.height; ++desty) {
-  //     for (uint32_t destx = 0; destx < destRect.width; ++destx) {
-  // 
-  //       if (destRect.x + destx < 0 ||
-  //           destRect.x + destx >= m_width ||
-  //           destRect.y + desty < 0 ||
-  //           destRect.y + desty >= m_height) {
-  //           continue;
-  //       }
-  // 
-  // 
-  //       float u = static_cast<float>(destx) / destRect.width;
-  //       float v = static_cast<float>(desty) / destRect.height;
-  // 
-  //       int srcx = std::clamp(srcRect.x + static_cast<int>(u * srcRect.width), uint32_t(0), src.m_width - 1);
-  //       int srcy = std::clamp(srcRect.y + static_cast<int>(v * srcRect.height), uint32_t(0), src.m_height - 1);
-  // 
-  //       Pixel srcPixel = src.m_pixels[srcy * src.m_width + srcx];
-  //       m_pixels[((desty + destRect.y) * m_width) + (destx + destRect.x)] = srcPixel;
-  //     }
-  //   }
-  // }
-    
 
 }
 
@@ -215,12 +101,12 @@ Image::decode(const Path& sourceFile) {
     }
 
     if (infoHeader.bitCount != 24) {
-      throw std::runtime_error("Only 24 bits per pixel BMP files are supported.");
+      // throw std::runtime_error("Only 24 bits per pixel BMP files are supported.");
     }
 
     m_width = infoHeader.width;
     m_height = infoHeader.height;
-    m_bpp = 24;
+    m_bpp = infoHeader.bitCount;
     m_pixels.clear();
     m_pixels.resize(0);
     m_pixels.resize(m_width * m_height, Pixel::BLACK);
@@ -291,7 +177,7 @@ Image::encode(const Path& sourceFile, const eImageFormat& format) {
     infoHeader.width = m_width;
     infoHeader.height = m_height;
     infoHeader.planes = 1;
-    infoHeader.bitCount = 24; // 24 bits per pixel
+    infoHeader.bitCount = m_bpp; // 24 bits per pixel
     infoHeader.compression = 0; // No compression
     infoHeader.sizeImage = dataSize;
 
@@ -338,16 +224,16 @@ Image::setPixel(const uint32_t& x, const uint32_t& y, const Pixel& color /*= Pix
 
 Pixel&
 Image::getColor(const uint32_t& u, const uint32_t& v) {
-  uint32_t srcx = std::clamp(static_cast<uint32_t>(u * m_width), uint32_t(0), m_width - 1);
-  uint32_t srcy = std::clamp(static_cast<uint32_t>(v * m_height), uint32_t(0), m_height - 1);
+  uint32_t srcx = std::clamp(static_cast<uint32_t>(u * m_width - 1), uint32_t(0), m_width - 1);
+  uint32_t srcy = std::clamp(static_cast<uint32_t>(v * m_height - 1), uint32_t(0), m_height - 1);
 
   return m_pixels[(srcy * m_width) + srcx];
 }
 
 void
 Image::setColor(const uint32_t& u, const uint32_t& v, const Pixel& color /*= Pixel::CLEAR */) {
-  uint32_t srcx = std::clamp(static_cast<uint32_t>(u * m_width), uint32_t(0), m_width - 1);
-  uint32_t srcy = std::clamp(static_cast<uint32_t>(v * m_height), uint32_t(0), m_height - 1);
+  uint32_t srcx = std::clamp(static_cast<uint32_t>(u * m_width - 1), uint32_t(0), m_width - 1);
+  uint32_t srcy = std::clamp(static_cast<uint32_t>(v * m_height - 1), uint32_t(0), m_height - 1);
 
   m_pixels[(srcy * m_width) + srcx] = color;
 }

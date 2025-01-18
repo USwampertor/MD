@@ -29,10 +29,8 @@ public:
   const float&
   operator()(const uint32_t& index) const;
     
-
   float&
   operator()(const uint32_t& index);
-    
 
   const float
   operator[](const uint32_t& index) const;
@@ -42,6 +40,21 @@ public:
 
   bool
   operator==(const Color& other) const;
+
+  Color
+  operator*(const Color& other) const;
+
+  Color
+  operator*(const float& other) const;
+
+  Color
+  operator+(const Color& other) const;
+
+  Color
+  operator-(const Color& other) const;
+
+  Color
+  operator/(const float& other) const;
 
   void
   setFloat(const float& nr, 
@@ -54,6 +67,9 @@ public:
           const uint32_t& ng, 
           const uint32_t& nb, 
           const uint32_t& na = 255);
+
+  void
+  saturate();
 
   String
   toString();

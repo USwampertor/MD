@@ -164,11 +164,13 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\mdColor.cpp" />
     <ClCompile Include="src\mdImage.cpp" />
+    <ClCompile Include="src\mdTexture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\mdColor.h" />
     <ClInclude Include="include\mdImage.h" />
     <ClInclude Include="include\mdImageManipulationPrerequisites.h" />
+    <ClInclude Include="include\mdTexture.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
                      Rect(0, 0, sourceFile.m_width, sourceFile.m_height),
                      Rect(0, 0, destinyFile.m_width, destinyFile.m_height),
                      eTextureMode::STRETCH);
-  String destinyString = Utils::format("%s/stretch.bmp", 
+  String destinyString = Utils::format("%s/res_stretch.bmp", 
                                        Path(argv[0]).parent_path().string().c_str());
   destinyFile.encode(destinyString, eImageFormat::BMP);
   destinyFile.clear(Color::BLACK);
@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
                      Rect(0, 0, sourceFile.m_width, sourceFile.m_height),
                      Rect(0, 0, destinyFile.m_width, destinyFile.m_height),
                      eTextureMode::CLAMP);
-  destinyString = Utils::format("%s/clamp.bmp", 
+  destinyString = Utils::format("%s/res_clamp.bmp", 
                                 Path(argv[0]).parent_path().string().c_str());
   destinyFile.encode(destinyString, eImageFormat::BMP);
   destinyFile.clear(Color::BLACK);
@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
                      Rect(0, 0, sourceFile.m_width, sourceFile.m_height),
                      Rect(0, 0, sourceFile.m_width * 2, sourceFile.m_height),
                      eTextureMode::MIRROR);
-  destinyString = Utils::format("%s/mirror.bmp", 
+  destinyString = Utils::format("%s/res_mirror.bmp", 
                                 Path(argv[0]).parent_path().string().c_str());
   destinyFile.encode(destinyString, eImageFormat::BMP);
   destinyFile.clear(Color::BLACK);
@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
                      Rect(0, 0, sourceFile.m_width, sourceFile.m_height),
                      Rect(0, 0, destinyFile.m_width, destinyFile.m_height),
                      eTextureMode::REPEAT);
-  destinyString = Utils::format("%s/repeat.bmp", 
+  destinyString = Utils::format("%s/res_repeat.bmp", 
                                 Path(argv[0]).parent_path().string().c_str());
   destinyFile.encode(destinyString, eImageFormat::BMP);
   destinyFile.clear(Color::BLACK);
@@ -65,14 +65,14 @@ int main(int argc, char* argv[]) {
                      Rect(0, 0, sourceFile.m_width, sourceFile.m_height),
                      Rect(0, 0, sourceFile.m_width, sourceFile.m_height),
                      eTextureMode::NONE);
-  destinyString = Utils::format("%s/none.bmp", 
+  destinyString = Utils::format("%s/res_none.bmp", 
                                 Path(argv[0]).parent_path().string().c_str());
   destinyFile.encode(destinyString, eImageFormat::BMP);
 
   Color filteredColor;
-  filteredColor.setUint(221, 68, 89);
+  filteredColor.setUint(222, 69, 90);
   destinyFile.filterPixel(Rect(0, 0, destinyFile.m_width, destinyFile.m_height), filteredColor);
-  destinyString = Utils::format("%s/filtered.bmp", 
+  destinyString = Utils::format("%s/res_filtered.bmp", 
                                 Path(argv[0]).parent_path().string().c_str());
   destinyFile.encode(destinyString, eImageFormat::BMP);
 

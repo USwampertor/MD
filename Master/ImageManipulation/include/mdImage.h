@@ -21,6 +21,12 @@ BETTER_ENUM(eImageFormat,
             RAW,
             BMP);
 
+BETTER_ENUM(eBlendMode,
+            uint32_t,
+            NONE,
+            ALPHABLEND,
+            ADDITIVE);
+
 #pragma pack(push, 1)
 struct BMPFileHeader 
 {
@@ -127,6 +133,9 @@ public:
 
   void
   filterPixel(const Rect& rect, const Pixel& color = Pixel::WHITE, const uint32_t& tolerance = 0);
+
+  void
+  alphaBlend(const Rect& rect, const eBlendMode& blendMode);
 
 public:
   uint32_t m_width;
