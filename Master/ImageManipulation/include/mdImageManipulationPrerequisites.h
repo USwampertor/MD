@@ -5,6 +5,7 @@
 #include <better-enums/enum.h>
 
 #include <algorithm>
+#include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <sstream>

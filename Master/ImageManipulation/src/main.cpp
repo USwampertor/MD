@@ -9,7 +9,7 @@ int main(int argc, char* argv[]) {
 
   Image sourceFile;
   Image destinyFile;
-  String sourceFStr = "frieren.bmp";
+  String sourceFStr = "portrait.bmp";
   // String destFStr = "maiden.bmp";
   String sourceString1 = Utils::format("%s/%s", 
                                       Path(argv[0]).parent_path().string().c_str(),
@@ -70,7 +70,7 @@ int main(int argc, char* argv[]) {
   destinyFile.encode(destinyString, eImageFormat::BMP);
 
   Color filteredColor;
-  filteredColor.setUint(222, 69, 90);
+  filteredColor.setUint(184, 184, 184);
   destinyFile.filterPixel(Rect(0, 0, destinyFile.m_width, destinyFile.m_height), filteredColor);
   destinyString = Utils::format("%s/res_filtered.bmp", 
                                 Path(argv[0]).parent_path().string().c_str());

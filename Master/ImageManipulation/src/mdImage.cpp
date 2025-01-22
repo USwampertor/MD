@@ -177,7 +177,7 @@ Image::encode(const Path& sourceFile, const eImageFormat& format) {
     infoHeader.width = m_width;
     infoHeader.height = m_height;
     infoHeader.planes = 1;
-    infoHeader.bitCount = m_bpp; // 24 bits per pixel
+    infoHeader.bitCount = m_bpp; // 24 bits per pixel normally
     infoHeader.compression = 0; // No compression
     infoHeader.sizeImage = dataSize;
 
@@ -257,5 +257,60 @@ Image::filterPixel(const Rect& rect, const Pixel& color, const uint32_t& toleran
   }
 }
 
+void
+Image::line(const uint32_t& x0,
+            const uint32_t& y0,
+            const uint32_t& x1,
+            const uint32_t& y1,
+            const Color& color) {
+  float dx = x1 - x0;
+  float dy = y1 - y0;
+
+  float steps = std::max(std::abs(dx), std::abs(dy));
+
+  float xInc = dx / steps;
+  float yInc = dy / steps;
+
+  float x = x0;
+  float y = y0;
+
+  for (int i = 0; i < steps; ++i) {
+    setPixel(uint32_t(x), uint32_t(y), color);
+    x += xInc;
+    y += yInc;
+  }
+
+}
+
+void
+Image::bresenhamLine(uint32_t x0,
+                     uint32_t y0,
+                     uint32_t x1,
+                     uint32_t y1,
+                     const Color& color) {
+  int32_t dx = std::abs(static_cast<int32_t>(x1 - x0));
+  int32_t dy = std::abs(static_cast<int32_t>(y1 - y0));
+
+  int32_t sx = x0 < x1 ? 1 : -1;
+  int32_t sy = y0 < y1 ? 1 : -1;
+
+  int32_t err = dx - dy;
+  int32_t e2;
+  
+  while (x0 != x1 || y0 != y1) {
+    setPixel(x0, y0, color);
+    e2 = 2 * err;
+
+    if (e2 > -dy) {
+      err -= dy;
+      x0 += sx;
+    }
+    if (e2 < dx) {
+      err += dx;
+      y0 += sy;
+    }
+  }
+
+}
 
 }

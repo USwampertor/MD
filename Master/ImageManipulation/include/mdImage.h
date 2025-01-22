@@ -13,7 +13,8 @@ BETTER_ENUM(eTextureMode,
             REPEAT, 
             CLAMP, 
             MIRROR, 
-            STRETCH);
+            STRETCH,
+            WRAP);
 
 BETTER_ENUM(eImageFormat,
             uint32_t,
@@ -100,6 +101,20 @@ public:
          const Rect& srcRect, 
          const Rect& destRect, 
          const eTextureMode& format);
+
+  void
+  line(const uint32_t& x0, 
+       const uint32_t& y0, 
+       const uint32_t& x1, 
+       const uint32_t& y1,
+       const Color& color);
+
+  void
+  bresenhamLine(uint32_t x0, 
+                uint32_t y0, 
+                uint32_t x1, 
+                uint32_t y1,
+                const Color& color);
 
   void
   decode(const String& sourceFile);
