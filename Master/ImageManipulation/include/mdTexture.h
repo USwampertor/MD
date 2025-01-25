@@ -37,8 +37,8 @@ public:
   void
   setImage(const Image& img);
 
-  Color sample(float& u, 
-               float& v, 
+  Color sample(float u, 
+               float v, 
                const eTextureMode& mode = eTextureMode::CLAMP, 
                const eSamplerFilter& sampler = eSamplerFilter::POINT);
 

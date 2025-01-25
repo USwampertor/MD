@@ -20,8 +20,8 @@ Texture::getColor(float& u,
 
 
 Color 
-Texture::sample(float& u, 
-                float& v, 
+Texture::sample(float u, 
+                float v, 
                 const eTextureMode& mode, 
                 const eSamplerFilter& sampler) {
   if (eSamplerFilter::POINT == sampler) {
