@@ -8,6 +8,25 @@ Texture::adjustTextureAddress(float& u,
                               const eTextureMode& mode /*= eTextureMode::CLAMP*/) {
   // TODO: Finish this
 
+  if (eTextureMode::WRAP == mode) {
+    u = std::fmodf(u, 1.0f);
+    v = std::fmodf(v, 1.0f);
+  }
+  else if (eTextureMode::MIRROR == mode) {
+    u = std::fmodf(u, 2.0f);
+    v = std::fmodf(v, 2.0f);
+    
+    u = u < 0.0f ? 2.0f + u : u > 1.0f ? 2.0f - u : u;
+    v = v < 0.0f ? 2.0f + v : v > 1.0f ? 2.0f - v : v;
+  }
+  else if (eTextureMode::MIRROR_ONCE == mode) {
+
+  }
+  else if (eTextureMode::CLAMP == mode) {
+    u = std::clamp(u, 0.0f, 1.0f);
+    v = std::clamp(v, 0.0f, 1.0f);
+  }
+
 }
 
 Color 
@@ -24,29 +43,28 @@ Texture::sample(float u,
                 float v, 
                 const eTextureMode& mode, 
                 const eSamplerFilter& sampler) {
+  adjustTextureAddress(u, v, mode);
   if (eSamplerFilter::POINT == sampler) {
-    adjustTextureAddress(u, v, mode);
+    // TODO: REMOVE REDUNDANCY
     return m_img.getColor(u, v);
   }
   else if (eSamplerFilter::LINEAR == sampler) {
-    adjustTextureAddress(u, v, mode);
     
-    float x = u * m_img.m_width - 1; 
-    float y = v * m_img.m_height - 1;
+    float x = u * (m_img.m_width - 1);
+    float y = v * (m_img.m_height - 1);
 
-    // TODO: AdjustTextureAddress should do this instead
-    uint32_t x0 = std::clamp(static_cast<uint32_t>(x), uint32_t(0), m_img.m_width - 1);
-    uint32_t y0 = std::clamp(static_cast<uint32_t>(y), uint32_t(0), m_img.m_height - 1);
+    int32_t x0 = static_cast<int32_t>(x); // std::clamp(static_cast<uint32_t>(x), uint32_t(0), m_img.m_width - 1);
+    int32_t y0 = static_cast<int32_t>(y); // std::clamp(static_cast<uint32_t>(y), uint32_t(0), m_img.m_height - 1);
 
-    uint32_t x1 = std::min(x0 + 1, m_img.m_width - 1);
-    uint32_t y1 = std::min(y0 + 1, m_img.m_height - 1);
+    int32_t x1 = std::min(x0 + 1, static_cast<int32_t>(m_img.m_width - 1));
+    int32_t y1 = std::min(y0 + 1, static_cast<int32_t>(m_img.m_height - 1));
 
     float dx = x - x0;
     float dy = y - y0;
 
     Color c00(m_img.getPixel(x0, y0));
-    Color c01(m_img.getPixel(x1, y0));
-    Color c10(m_img.getPixel(x0, y1));
+    Color c10(m_img.getPixel(x1, y0));
+    Color c01(m_img.getPixel(x0, y1));
     Color c11(m_img.getPixel(x1, y1));
 
     Color c0 = c00 * (1.0f - dx) + c10 * dx;
@@ -60,21 +78,37 @@ Texture::sample(float u,
 
 }
 
-
-void 
-Texture::draw(Image& img, 
-              const Rect& rect, 
+void
+Texture::draw(Image& img,
+              int32_t x,
+              int32_t y,
+              const Rect& srcRect, 
               const eTextureMode& mode, 
-              const eBlendMode& blend) {
+              const eBlendMode& blend,
+              const eSamplerFilter& filter) {
 
-  for (uint32_t desty = 0; desty < rect.height; ++desty) {
-    for (uint32_t destx = 0; destx < rect.width; ++destx) {
+  int32_t realWidth = srcRect.width - srcRect.x;
+  int32_t realHeight = srcRect.height - srcRect.y;
 
-      float u = destx / rect.width;
-      float v = desty / rect.height;
+  if (realWidth < 0 || realHeight < 0) {
+    return;
+  }
+
+  if (x + realWidth > img.m_width) {
+    realWidth -= (x + realWidth) - img.m_width;
+  }
+  if (y + realHeight > img.m_height) {
+    realHeight -= (y + realHeight) - img.m_height;
+  }
+
+  for (int32_t dsty = 0; dsty < srcRect.height; ++dsty) {
+    for (int32_t dstx = 0; dstx < srcRect.width; ++dstx) {
+
+      float u = static_cast<float>(dstx) / srcRect.width;
+      float v = static_cast<float>(dsty) / srcRect.height;
       // TODO: Check on samplerFilter
-      Color srcColor = sample(u, v, mode, eSamplerFilter::POINT);
-      Color dstColor(img.getPixel(rect.x + destx, rect.y + desty));
+      Color srcColor = sample(u, v, mode, filter);
+      Color dstColor(img.getPixel(x + dstx, y + dsty));
       Color blendedColor = Color::CLEAR;
 
       if (eBlendMode::ALPHABLEND == blend) {
@@ -87,7 +121,7 @@ Texture::draw(Image& img,
       else if (eBlendMode::NONE == blend) {
         blendedColor = srcColor;
       }
-      img.setPixel(rect.x + destx, rect.y + desty, blendedColor);
+      img.setPixel(x + dstx, y + dsty, blendedColor);
     }
   }
 }

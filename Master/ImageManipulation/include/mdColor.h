@@ -83,6 +83,11 @@ public:
   String
   toHexString();
 
+  float
+  toGrey() {
+    return (0.299f * m_r + 0.587f * m_g + 0.114f * m_b);
+  }
+
   static const Color AZURE;
   static const Color BLACK;
   static const Color BLUE;
@@ -110,6 +115,10 @@ public:
   float m_a;
 
 };
+
+
+using PixelShader = std::function<Color(float, float)>;
+
 
 }
 

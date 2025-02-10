@@ -102,10 +102,10 @@ namespace MD
 
   void
   Color::saturate() {
-    m_r = m_r > 1.0f ? 1.0f : m_r;
-    m_g = m_g > 1.0f ? 1.0f : m_g;
-    m_b = m_b > 1.0f ? 1.0f : m_b;
-    m_a = m_a > 1.0f ? 1.0f : m_a;
+    m_r = std::clamp(m_r, 0.0f, 1.0f);
+    m_g = std::clamp(m_g, 0.0f, 1.0f);
+    m_b = std::clamp(m_b, 0.0f, 1.0f);
+    m_a = std::clamp(m_a, 0.0f, 1.0f);
   }
 
   String

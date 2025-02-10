@@ -2,6 +2,7 @@
 
 #include "mdImageManipulationPrerequisites.h"
 #include "mdColor.h"
+#include "mdTriangle.h"
 
 
 namespace MD {
@@ -10,9 +11,9 @@ BETTER_ENUM(eTextureMode,
             uint32_t, 
             UNKNOWN, 
             NONE, 
-            REPEAT, 
             CLAMP, 
-            MIRROR, 
+            MIRROR,
+            MIRROR_ONCE,
             STRETCH,
             WRAP);
 
@@ -28,29 +29,35 @@ BETTER_ENUM(eBlendMode,
             ALPHABLEND,
             ADDITIVE);
 
+BETTER_ENUM(eRegionCode, 
+            uint32_t, 
+            INSIDE = 0, 
+            LEFT = 1, 
+            RIGHT = 2, 
+            BOTTOM = 4, 
+            TOP = 8);
+
 #pragma pack(push, 1)
-struct BMPFileHeader 
-{
-  uint16_t fileType;     // Siempre 'BM'
-  uint32_t fileSize;     // Tamaño total del archivo
-  uint16_t reserved1;    // Reservado, debe ser 0
-  uint16_t reserved2;    // Reservado, debe ser 0
-  uint32_t offsetData;   // Offset donde comienzan los datos de píxeles
+struct BMPFileHeader {
+  uint16_t fileType{ 0x4D42 }; // 'BM'
+  uint32_t fileSize{ 0 };
+  uint16_t reserved1{ 0 };
+  uint16_t reserved2{ 0 };
+  uint32_t offsetData{ 54 };
 };
 
-struct BMPInfoHeader 
-{
-  uint32_t size;         // Tamaño del encabezado DIB
-  int32_t width;         // Anchura de la imagen en píxeles
-  int32_t height;        // Altura de la imagen en píxeles
-  uint16_t planes;       // Siempre 1
-  uint16_t bitCount;     // Bits por píxel (24 en este caso)
-  uint32_t compression;  // Tipo de compresión (0 = sin compresión)
-  uint32_t sizeImage;    // Tamaño de los datos de la imagen
-  int32_t xPixelsPerMeter; // Resolución horizontal
-  int32_t yPixelsPerMeter; // Resolución vertical
-  uint32_t colorsUsed;   // Número de colores en la paleta (0 = todos)
-  uint32_t colorsImportant; // Número de colores importantes (0 = todos)
+struct BMPInfoHeader {
+  uint32_t size{ 40 };
+  int32_t width{ 0 };
+  int32_t height{ 0 };
+  uint16_t planes{ 1 };
+  uint16_t bitCount{ 24 };
+  uint32_t compression{ 0 };
+  uint32_t sizeImage{ 0 };
+  int32_t xPixelsPerMeter{ 0 };
+  int32_t yPixelsPerMeter{ 0 };
+  uint32_t colorsUsed{ 0 };
+  uint32_t colorsImportant{ 0 };
 };
 #pragma pack(pop)
 
@@ -60,16 +67,19 @@ public:
 
   Rect() = default;
 
-  Rect(uint32_t nx, uint32_t ny, uint32_t nwidth, uint32_t nheight)
+  Rect(int32_t nx, 
+       int32_t ny, 
+       int32_t nwidth, 
+       int32_t nheight)
     : x(nx),
       y(ny),
       width(nwidth),
       height(nheight) {}
 
-  uint32_t x;
-  uint32_t y;
-  uint32_t width;
-  uint32_t height;
+  int32_t x;
+  int32_t y;
+  int32_t width;
+  int32_t height;
 };
 
 
@@ -100,21 +110,45 @@ public:
   bitBlt(const Image& src, 
          const Rect& srcRect, 
          const Rect& destRect, 
-         const eTextureMode& format);
+         const eTextureMode& format = eTextureMode::NONE);
 
   void
-  line(const uint32_t& x0, 
-       const uint32_t& y0, 
-       const uint32_t& x1, 
-       const uint32_t& y1,
+  line(int32_t x0, 
+       int32_t y0, 
+       int32_t x1, 
+       int32_t y1,
        const Color& color);
 
   void
-  bresenhamLine(uint32_t x0, 
-                uint32_t y0, 
-                uint32_t x1, 
-                uint32_t y1,
+  bresenhamLine(int32_t x0, 
+                int32_t y0, 
+                int32_t x1, 
+                int32_t y1,
                 const Color& color);
+
+  void
+  bresenhamCircle();
+
+  void
+  fillTriangle(const Triangle& t, Image& img, const Color& toColor = Color::CLEAR);
+
+  int32_t 
+  computeRegionCode(const int32_t x,
+                    const int32_t y,
+                    const int32_t minX,
+                    const int32_t minY,
+                    const int32_t maxX,
+                    const int32_t maxY);
+
+  bool
+  clipLine(Rect r, 
+           int32_t& x0,
+           int32_t& y0, 
+           int32_t& x1, 
+           int32_t& y1, 
+           const Color& c);
+
+  // Bresenham circle
 
   void
   decode(const String& sourceFile);
@@ -132,7 +166,7 @@ public:
   clear(const Color& color = Color::CLEAR);
 
   uint32_t
-  mirrorCoord(uint32_t coord, const uint32_t max);
+  mirrorCoord(int32_t coord, int32_t max);
 
   Pixel&
   getPixel(const uint32_t& x, const uint32_t& y);
@@ -141,7 +175,7 @@ public:
   setPixel(const uint32_t& x, const uint32_t& y, const Pixel& color = Pixel::CLEAR);
 
   Pixel&
-  getColor(const uint32_t& u, const uint32_t& v);
+  getColor(const float& u, const float& v);
 
   void
   setColor(const uint32_t& u, const uint32_t& v, const Pixel& color = Pixel::CLEAR);

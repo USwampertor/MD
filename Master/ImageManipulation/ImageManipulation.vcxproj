@@ -95,13 +95,13 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)$(Projectname)/include/;$(CYLLENE_DEPENDENCIES)include/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)$(Projectname)/include/;$(CYLLENE_DEPENDENCIES)include/;$(DEVLIBS)SDL/include/</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)lib/$(PlatformTarget)/</AdditionalLibraryDirectories>
-      <AdditionalDependencies />
+      <AdditionalLibraryDirectories>$(SolutionDir)lib/$(PlatformTarget)/;$(DEVLIBS)SDL/lib/$(PlatformTarget)/</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL3d.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -113,15 +113,15 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)$(Projectname)/include/;$(CYLLENE_DEPENDENCIES)include/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)$(Projectname)/include/;$(CYLLENE_DEPENDENCIES)include/;$(DEVLIBS)SDL/include/</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)lib/$(PlatformTarget)/</AdditionalLibraryDirectories>
-      <AdditionalDependencies />
+      <AdditionalLibraryDirectories>$(SolutionDir)lib/$(PlatformTarget)/;$(DEVLIBS)SDL/lib/$(PlatformTarget)/</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -131,13 +131,13 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)$(Projectname)/include/;$(CYLLENE_DEPENDENCIES)include/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)$(Projectname)/include/;$(CYLLENE_DEPENDENCIES)include/;$(DEVLIBS)SDL/include/</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)lib/$(PlatformTarget)/</AdditionalLibraryDirectories>
-      <AdditionalDependencies />
+      <AdditionalLibraryDirectories>$(SolutionDir)lib/$(PlatformTarget)/;$(DEVLIBS)SDL/lib/$(PlatformTarget)/</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL3d.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -149,15 +149,15 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)$(Projectname)/include/;$(CYLLENE_DEPENDENCIES)include/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)$(Projectname)/include/;$(CYLLENE_DEPENDENCIES)include/;$(DEVLIBS)SDL/include/</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)lib/$(PlatformTarget)/</AdditionalLibraryDirectories>
-      <AdditionalDependencies />
+      <AdditionalLibraryDirectories>$(SolutionDir)lib/$(PlatformTarget)/;$(DEVLIBS)SDL/lib/$(PlatformTarget)/</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -165,12 +165,20 @@
     <ClCompile Include="src\mdColor.cpp" />
     <ClCompile Include="src\mdImage.cpp" />
     <ClCompile Include="src\mdTexture.cpp" />
+    <ClCompile Include="src\mdTriangle.cpp" />
+    <ClCompile Include="src\mdVector3.cpp" />
+    <ClCompile Include="src\mdVertex.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\mdColor.h" />
     <ClInclude Include="include\mdImage.h" />
     <ClInclude Include="include\mdImageManipulationPrerequisites.h" />
+    <ClInclude Include="include\mdMathObjects.h" />
     <ClInclude Include="include\mdTexture.h" />
+    <ClInclude Include="include\mdTriangle.h" />
+    <ClInclude Include="include\mdVector3.h" />
+    <ClInclude Include="include\mdVertex.h" />
+    <ClInclude Include="include\mdWindow.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

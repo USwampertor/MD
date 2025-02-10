@@ -30,9 +30,12 @@ public:
 
   void 
   draw(Image& img, 
-       const Rect& srcRect, 
+       int32_t x,
+       int32_t y,
+       const Rect& srcRect,
        const eTextureMode& mode = eTextureMode::CLAMP, 
-       const eBlendMode& blend = eBlendMode::ALPHABLEND);
+       const eBlendMode& blend = eBlendMode::ALPHABLEND,
+       const eSamplerFilter& filter = eSamplerFilter::POINT);
 
   void
   setImage(const Image& img);

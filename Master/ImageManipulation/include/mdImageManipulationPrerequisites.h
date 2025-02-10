@@ -6,11 +6,14 @@
 
 #include <algorithm>
 #include <cmath>
+#include <chrono>
 #include <filesystem>
+#include <functional>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
+#include <random>
 
 namespace MD {
 
@@ -58,7 +61,12 @@ struct Utils {
     return std::abs(a - b) <= threshold;
   }
 
-};
+  static float
+  getRandom(const uint32_t& maxValue) {
+    std::srand(std::time(nullptr));
+    return std::rand() % maxValue;
+  }
 
+};
 
 }
