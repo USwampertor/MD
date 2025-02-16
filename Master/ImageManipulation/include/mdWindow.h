@@ -13,21 +13,6 @@
 
 
 namespace MD {
-// BETTER_ENUM(eWindowInit, uint32_t, 
-//           TIMER           = SDL_INIT_TIMER,
-//           AUDIO           = SDL_INIT_AUDIO,
-//           VIDEO           = SDL_INIT_VIDEO,
-//           JOYSTICK        = SDL_INIT_JOYSTICK,
-//           HAPTIC          = SDL_INIT_HAPTIC,
-//           GAMECONTROLLER  = SDL_INIT_GAMECONTROLLER,
-//           EVENTS          = SDL_INIT_EVENTS,
-//           SENSOR          = SDL_INIT_SENSOR,
-//           NOPARACHUTE     = SDL_INIT_NOPARACHUTE,
-//           EVERYTHING      = SDL_INIT_EVERYTHING);
-// 
-
-
-
 
 using Window = SDL_Window;
 using MSGBoxData = SDL_MessageBoxData;

@@ -9,7 +9,6 @@
 
 using namespace MD;
 
-// Rotate a vertex around a point (x, y, z)
 Vertex rotateVertex(const Vertex& v, 
                     float angleX, 
                     float angleY, 
@@ -19,12 +18,10 @@ Vertex rotateVertex(const Vertex& v,
                     float cz) {
   Vertex result = v;
 
-  // Translate to origin
   result.x -= cx;
   result.y -= cy;
   result.z -= cz;
 
-  // Rotation around X axis
   float cosX = cos(angleX);
   float sinX = sin(angleX);
   float y = result.y * cosX - result.z * sinX;
@@ -32,7 +29,6 @@ Vertex rotateVertex(const Vertex& v,
   result.y = y;
   result.z = z;
 
-  // Rotation around Y axis
   float cosY = cos(angleY);
   float sinY = sin(angleY);
   float x = result.x * cosY + result.z * sinY;
@@ -40,7 +36,6 @@ Vertex rotateVertex(const Vertex& v,
   result.x = x;
   result.z = z;
 
-  // Rotation around Z axis
   float cosZ = cos(angleZ);
   float sinZ = sin(angleZ);
   x = result.x * cosZ - result.y * sinZ;
@@ -61,22 +56,18 @@ float implicitLineEquation(const Vertex& p, const Vertex& p0, const Vertex& p1) 
 }
 
 Vertex getBarycentricCoords(const Vertex& A, const Vertex& B, const Vertex& C, const Vector3& P) {
-  // Compute vectors
   Vector3 v0 = B - A;
   Vector3 v1 = C - A;
   Vector3 v2 = P - A;
 
-  // Compute dot products
   float d00 = Vector3::dot(v0, v0);
   float d01 = Vector3::dot(v0, v1);
   float d11 = Vector3::dot(v1, v1);
   float d20 = Vector3::dot(v2, v0);
   float d21 = Vector3::dot(v2, v1);
 
-  // Compute denominator
   float denom = d00 * d11 - d01 * d01;
 
-  // Compute barycentric coordinates
   float v = (d11 * d20 - d01 * d21) / denom;
   float w = (d00 * d21 - d01 * d20) / denom;
   float u = 1.0f - v - w;
@@ -230,40 +221,37 @@ fillTriangle(const Triangle& t, Texture& tex, Image& img, const Color& toColor, 
   else {
     // Split the triangle into a flat-bottomed and a flat-topped triangle
     float tVal = static_cast<float>(p1.y - p0.y) / static_cast<float>(p2.y - p0.y);
-    int newX = static_cast<int32_t>(p0.x + tVal * (p2.x - p0.x));
-
-    // Calculate barycentric coordinates for the new vertex
-    Vector3 barycentric = getBarycentricCoords(p0, p1, p2, Vector3(newX, p1.y, 0));
-
-    // Interpolate u and v using barycentric coordinates
-    float newU = barycentric.x * p0.u + barycentric.y * p1.u + barycentric.z * p2.u;
-    float newV = barycentric.x * p0.v + barycentric.y * p1.v + barycentric.z * p2.v;
-
-    // Create the new vertex
-    Vertex newVtx(static_cast<float>(newX), p1.y, 0, newU, newV);
-
-    // Create the two sub-triangles
-    Triangle t1(p0, newVtx, p1);
-    Triangle t2(p1, newVtx, p2);
-
-    // int newX = p0.x + 
-    //            static_cast<int32_t>(0.5f + 
-    //                                 static_cast<float>(p1.y - p0.y) * 
-    //                                 static_cast<float>(p2.x - p0.x) /
-    //                                 static_cast<float>(p2.y - p0.y));
+    // int newX = static_cast<int32_t>(p0.x + tVal * (p2.x - p0.x));
     // 
-    // float newU = p0.u + ((p1.y - p0.y) * ((p2.u - p0.u) / (p2.y - p0.y)));
-    // float newV = p0.v + ((p1.y - p0.y) * ((p2.v - p0.v) / (p2.y - p0.y)));
+    // // Calculate barycentric coordinates for the new vertex
+    // Vector3 barycentric = getBarycentricCoords(p0, p1, p2, Vector3(newX, p1.y, 0));
+    // 
+    // float newU = barycentric.x * p0.u + barycentric.y * p1.u + barycentric.z * p2.u;
+    // float newV = barycentric.x * p0.v + barycentric.y * p1.v + barycentric.z * p2.v;
+    // 
     // Vertex newVtx(static_cast<float>(newX), p1.y, 0, newU, newV);
-    // 
-    // Color c0 = Color::RED;
-    // Color c1 = Color::GREEN;
-    // Color c2 = Color::BLUE;
-    // 
-    Color nC = t.c0 + ((t.c2 - t.c0) * (p1.y - p0.y) / (p2.y - p0.y));
     // 
     // Triangle t1(p0, newVtx, p1);
     // Triangle t2(p1, newVtx, p2);
+
+    int newX = p0.x + 
+               static_cast<int32_t>(0.5f + 
+                                    static_cast<float>(p1.y - p0.y) * 
+                                    static_cast<float>(p2.x - p0.x) /
+                                    static_cast<float>(p2.y - p0.y));
+    
+    float newU = p0.u + ((p1.y - p0.y) * ((p2.u - p0.u) / (p2.y - p0.y)));
+    float newV = p0.v + ((p1.y - p0.y) * ((p2.v - p0.v) / (p2.y - p0.y)));
+    Vertex newVtx(static_cast<float>(newX), p1.y, 0, newU, newV);
+    
+    Color c0 = Color::RED;
+    Color c1 = Color::GREEN;
+    Color c2 = Color::BLUE;
+    
+    Color nC = t.c0 + ((t.c2 - t.c0) * (p1.y - p0.y) / (p2.y - p0.y));
+    
+    Triangle t1(p0, newVtx, p1);
+    Triangle t2(p1, newVtx, p2);
 
     t1.c0 = t.c0;
     t1.c1 = t.c1;
@@ -646,7 +634,9 @@ int main(int argc, char* argv[]) {
   // Cube faces (each face is 2 triangles)
   // 
   // 
- 
+  //////////////////////////////////////////////////////////////////////////
+  // TODO: SIMPLIFY THIS
+
   std::vector<Triangle> cubeFaces = {
     // Back
     {Vertex(800,500,-300, 0, 0),Vertex(500,500,-300, 1, 0), Vertex(800,800,-300, 0, 1)},
@@ -669,8 +659,8 @@ int main(int argc, char* argv[]) {
     {Vertex(500,500, 0, 1, 0),Vertex(500,800, 0, 1, 1), Vertex(500,800,-300, 0, 1)},
     
     // Right Side
-    {Vertex(800,500, -300, 1, 0),Vertex(800,800, -300, 1, 1), Vertex(800,800, 0, 0, 1)}
-    {Vertex(800,500, 0, 0, 0),Vertex(800,500, -300, 1, 0), Vertex(800,800, 0, 0, 1)},
+    {Vertex(800,500, -300, 1, 0),Vertex(800,800, -300, 1, 1), Vertex(800,800, 0, 0, 1)},
+    {Vertex(800,500, 0, 0, 0),Vertex(800,500, -300, 1, 0), Vertex(800,800, 0, 0, 1)}
 
   };
 
@@ -688,11 +678,10 @@ int main(int argc, char* argv[]) {
       }
     }
 
-    //////////////////////////////////////////////////////////////////////////
     // Rotate the cube
-    angleX += 0.1;
-    angleY += 0.1;
-    // angleZ += 0.1;
+    angleX += 0.1f;
+    angleY += 0.1f;
+    angleZ += 0.1f;
 
     for (const auto& tri : cubeFaces) {
       Triangle rotatedTri(
@@ -705,22 +694,21 @@ int main(int argc, char* argv[]) {
       v0v2 = rotatedTri.v2 - rotatedTri.v0;
 
       normal = Vector3::cross(v0v1, v0v2);
-      // std::cout << v0v1.toString() << " - " << v0v2.toString() << " - " << normal.toString() << std::endl;
       normal = normal.normalized();
       intensity = normal | view;
       //triangle is facing forwards
       if (intensity > 0) {
+        // Draw the triangle
         fillTriangle(rotatedTri, horseTexture, imgScreen, Color::CYAN, texPShader);
       }
 
-      // Draw the triangle
     }
 
     sdlTexture = SDL_CreateTexture(renderer,
-      SDL_PIXELFORMAT_RGBA128_FLOAT,
-      SDL_TEXTUREACCESS_STREAMING,
-      imgScreen.m_width,
-      imgScreen.m_height);
+                                   SDL_PIXELFORMAT_RGBA128_FLOAT,
+                                   SDL_TEXTUREACCESS_STREAMING,
+                                   imgScreen.m_width,
+                                   imgScreen.m_height);
 
     // Clear screen with a color
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);

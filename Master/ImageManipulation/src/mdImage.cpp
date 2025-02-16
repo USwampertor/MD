@@ -411,75 +411,61 @@ float implicitLineEquation(const Vertex& p, const Vertex& p0, const Vertex& p1) 
   return (p0.y - p1.y) * p.x + (p1.x - p0.x) * p.y + (p0.x * p1.y - p1.x * p0.y);
 }
 
-void
-Image::fillTriangle(const Triangle& t, Image& img, const Color& toColor) {
-
-  Vertex p0 = t.v0;
-  Vertex p1 = t.v1;
-  Vertex p2 = t.v2;
-
-  Color c0 = Color::RED;
-  Color c1 = Color::BLUE;
-  Color c2 = Color::GREEN;
-
-  int x_min = static_cast<int>(std::floor(std::min({ p0.x, p1.x, p2.x })));
-  int x_max = static_cast<int>(std::ceil(std::max({ p0.x, p1.x, p2.x })));
-  int y_min = static_cast<int>(std::floor(std::min({ p0.y, p1.y, p2.y })));
-  int y_max = static_cast<int>(std::ceil(std::max({ p0.y, p1.y, p2.y })));
-
-  float f_alpha = implicitLineEquation(p0, p1, p2);
-  float f_beta = implicitLineEquation(p1, p2, p0);
-  float f_gamma = implicitLineEquation(p2, p0, p1);
-
-  // Step 3: Loop over the bounding box
-  for (int y = y_min; y <= y_max; ++y) {
-    for (int x = x_min; x <= x_max; ++x) {
-      // Skip pixels that are outside the framebuffer
-      if (x < 0 || x >= m_width || y < 0 || y >= m_height) {
-        continue;
-      }
-
-      Vertex p = { static_cast<float>(x) + 0.5f, static_cast<float>(y) + 0.5f }; // Pixel center
-
-      // Step 4: Compute barycentric coordinates
-      float alpha = implicitLineEquation(p, p1, p2) / f_alpha;
-      float beta  = implicitLineEquation(p, p2, p0) / f_beta;
-      float gamma = implicitLineEquation(p, p0, p1) / f_gamma;
-
-      // Step 5: Check if the pixel is inside the triangle
-      if (alpha >= 0 && beta >= 0 && gamma >= 0) {
-        // Step 6: Handle edge cases using an off-screen point
-        Vertex off_screen = { -1.0f, -1.0f };
-        bool edge_test_alpha = (alpha > 0) || (implicitLineEquation(off_screen, p1, p2) * implicitLineEquation(p, p1, p2) > 0);
-        bool edge_test_beta = (beta > 0) || (implicitLineEquation(off_screen, p2, p0) * implicitLineEquation(p, p2, p0) > 0);
-        bool edge_test_gamma = (gamma > 0) || (implicitLineEquation(off_screen, p0, p1) * implicitLineEquation(p, p0, p1) > 0);
-
-        if (edge_test_alpha && edge_test_beta && edge_test_gamma) {
-          // Step 7: Interpolate the color using barycentric coordinates
-          Pixel c;
-          // c.m_r = alpha * c0.m_r + beta * c1.m_r + gamma * c2.m_r;
-          // c.m_g = alpha * c0.m_g + beta * c1.m_g + gamma * c2.m_g;
-          // c.m_b = alpha * c0.m_b + beta * c1.m_b + gamma * c2.m_b;
-          // c.m_a = alpha * c0.m_a + beta * c1.m_a + gamma * c2.m_a;
-
-          float u = alpha * 0 + beta * 0 + gamma * 1;
-          float v = alpha * 0 + beta * 1 + gamma * 0;
-
-          // Step 8: Sample the texture at the interpolated (u, v) coordinates
-          uint32_t tex_x = static_cast<uint32_t>(u * (img.m_width - 1));
-          uint32_t tex_y = static_cast<uint32_t>(v * (img.m_height - 1));
-
-          // Clamp texture coordinates to avoid out-of-bounds access
-          tex_x = std::clamp(tex_x, uint32_t(0), static_cast<uint32_t>(img.m_width - 1));
-          tex_y = std::clamp(tex_y, uint32_t(0), static_cast<uint32_t>(img.m_height - 1));
-
-          // Step 9: Get the color from the texture and draw the pixel
-          // Step 8: Draw the pixel (assuming framebuffer is a 2D vector of colors)
-          setPixel(x, y, img.getPixel(tex_x, tex_y));
-        }
-      }
-    }
-  }
-}
+// void
+// Image::fillTriangle(const Triangle& t, Image& img, const Color& toColor) {
+// 
+//   Vertex p0 = t.v0;
+//   Vertex p1 = t.v1;
+//   Vertex p2 = t.v2;
+// 
+//   Color c0 = Color::RED;
+//   Color c1 = Color::BLUE;
+//   Color c2 = Color::GREEN;
+// 
+//   int x_min = static_cast<int>(std::floor(std::min({ p0.x, p1.x, p2.x })));
+//   int x_max = static_cast<int>(std::ceil(std::max({ p0.x, p1.x, p2.x })));
+//   int y_min = static_cast<int>(std::floor(std::min({ p0.y, p1.y, p2.y })));
+//   int y_max = static_cast<int>(std::ceil(std::max({ p0.y, p1.y, p2.y })));
+// 
+//   float f_alpha = implicitLineEquation(p0, p1, p2);
+//   float f_beta = implicitLineEquation(p1, p2, p0);
+//   float f_gamma = implicitLineEquation(p2, p0, p1);
+// 
+//   for (int y = y_min; y <= y_max; ++y) {
+//     for (int x = x_min; x <= x_max; ++x) {
+//       if (x < 0 || x >= m_width || y < 0 || y >= m_height) {
+//         continue;
+//       }
+// 
+//       Vertex p = { static_cast<float>(x) + 0.5f, static_cast<float>(y) + 0.5f }; // Pixel center
+// 
+//       float alpha = implicitLineEquation(p, p1, p2) / f_alpha;
+//       float beta  = implicitLineEquation(p, p2, p0) / f_beta;
+//       float gamma = implicitLineEquation(p, p0, p1) / f_gamma;
+// 
+//       if (alpha >= 0 && beta >= 0 && gamma >= 0) {
+//         Vertex off_screen = { -1.0f, -1.0f };
+//         bool edge_test_alpha = (alpha > 0) || (implicitLineEquation(off_screen, p1, p2) * implicitLineEquation(p, p1, p2) > 0);
+//         bool edge_test_beta = (beta > 0) || (implicitLineEquation(off_screen, p2, p0) * implicitLineEquation(p, p2, p0) > 0);
+//         bool edge_test_gamma = (gamma > 0) || (implicitLineEquation(off_screen, p0, p1) * implicitLineEquation(p, p0, p1) > 0);
+// 
+//         if (edge_test_alpha && edge_test_beta && edge_test_gamma) {
+//           Pixel c;
+// 
+//           float u = alpha * 0 + beta * 0 + gamma * 1;
+//           float v = alpha * 0 + beta * 1 + gamma * 0;
+// 
+//           uint32_t tex_x = static_cast<uint32_t>(u * (img.m_width - 1));
+//           uint32_t tex_y = static_cast<uint32_t>(v * (img.m_height - 1));
+// 
+//           tex_x = std::clamp(tex_x, uint32_t(0), static_cast<uint32_t>(img.m_width - 1));
+//           tex_y = std::clamp(tex_y, uint32_t(0), static_cast<uint32_t>(img.m_height - 1));
+// 
+//           setPixel(x, y, img.getPixel(tex_x, tex_y));
+//         }
+//       }
+//     }
+//   }
+// }
 
 }

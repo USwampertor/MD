@@ -129,8 +129,8 @@ public:
   void
   bresenhamCircle();
 
-  void
-  fillTriangle(const Triangle& t, Image& img, const Color& toColor = Color::CLEAR);
+  // void
+  // fillTriangle(const Triangle& t, Image& img, const Color& toColor = Color::CLEAR);
 
   int32_t 
   computeRegionCode(const int32_t x,
@@ -183,8 +183,8 @@ public:
   void
   filterPixel(const Rect& rect, const Pixel& color = Pixel::WHITE, const uint32_t& tolerance = 0);
 
-  void
-  alphaBlend(const Rect& rect, const eBlendMode& blendMode);
+  // void
+  // alphaBlend(const Rect& rect, const eBlendMode& blendMode);
 
 public:
   uint32_t m_width;
