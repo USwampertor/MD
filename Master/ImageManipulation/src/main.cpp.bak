@@ -75,7 +75,7 @@ Vertex getBarycentricCoords(const Vertex& A, const Vertex& B, const Vertex& C, c
   return Vector3(u, v, w);
 }
 
-void drawTopTriangle(Triangle t, Texture& tex, Image& img, const PixelShader& pShader) {
+void drawTopTriangle(Triangle t, Texture& tex, Image& img, const MPixelShader& pShader) {
   Vertex p0 = t.v0;
   Vertex p1 = t.v1; 
   Vertex p2 = t.v2;
@@ -137,7 +137,7 @@ void drawTopTriangle(Triangle t, Texture& tex, Image& img, const PixelShader& pS
   }
 }
 
-void drawBottomTriangle(Triangle t, Texture& tex, Image& img, const PixelShader& pShader) {
+void drawBottomTriangle(Triangle t, Texture& tex, Image& img, const MPixelShader& pShader) {
   Vertex p0 = t.v0;
   Vertex p1 = t.v1;
   Vertex p2 = t.v2;
@@ -201,7 +201,7 @@ void drawBottomTriangle(Triangle t, Texture& tex, Image& img, const PixelShader&
 }
 
 void
-fillTriangle(const Triangle& t, Texture& tex, Image& img, const Color& toColor, const PixelShader& pShader) {
+fillTriangle(const Triangle& t, Texture& tex, Image& img, const Color& toColor, const MPixelShader& pShader) {
   // if all three triangle edges have different y, we split it into 2
   Vertex p0 = t.v0;
   Vertex p1 = t.v1;
@@ -413,17 +413,17 @@ int main(int argc, char* argv[]) {
   // imgScreen.bresenhamLine(t.v1.x, t.v1.y, t.v2.x, t.v2.y, Color::GREEN);
   // imgScreen.bresenhamLine(t.v2.x, t.v2.y, t.v0.x, t.v0.y, Color::GREEN);
 
-  PixelShader uvPShader = [&horseTexture](float u, float v) {
+  MPixelShader uvPShader = [&horseTexture](float u, float v) {
     Color c(u, v, 0.0f, 1.0f); 
     return c;
   };
 
-  PixelShader texPShader = [&horseTexture](float u, float v) {
+  MPixelShader texPShader = [&horseTexture](float u, float v) {
     Color c/*(u, v, 0.0f, 1.0f);*/ = horseTexture.sample(u, v, eTextureMode::CLAMP, eSamplerFilter::LINEAR);
     return c;
   };
 
-  PixelShader greyPShader = [&horseTexture](float u, float v) {
+  MPixelShader greyPShader = [&horseTexture](float u, float v) {
     Color c = horseTexture.sample(u, v, eTextureMode::CLAMP, eSamplerFilter::LINEAR);
     Vector3 grey(0.299f, 0.587f, 0.114f);
     Vector3 colorV(c.m_r, c.m_g, c.m_b);
@@ -435,7 +435,7 @@ int main(int argc, char* argv[]) {
     return c;
   };
 
-  PixelShader kernelPShader = [&horseTexture](float u, float v) {
+  MPixelShader kernelPShader = [&horseTexture](float u, float v) {
 
     float kernelBlur[] = {
       0.0625,0.125,0.0625,
@@ -520,7 +520,7 @@ int main(int argc, char* argv[]) {
   };
 
 
-  PixelShader normalPShader = [&horseTexture](float u, float v) {
+  MPixelShader normalPShader = [&horseTexture](float u, float v) {
 
     float kernelLSoble[] = {
       1,0, -1,

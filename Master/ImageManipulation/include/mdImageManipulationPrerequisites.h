@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <functional>
 #include <fstream>
+#include <memory.h>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -38,6 +39,15 @@ using StreamSize = std::streamsize;
 
 template<typename T, typename A = std::allocator<T>>
 using Vector = std::vector<T, A>;
+
+template<typename T>
+using SPtr = std::shared_ptr<T>;
+
+template<typename T>
+using UPtr = std::unique_ptr<T>;
+
+template<typename T>
+using WPtr = std::weak_ptr<T>;
 
 
 struct Utils {
@@ -69,4 +79,9 @@ struct Utils {
 
 };
 
+
+
+
 }
+
+#define SAFE_RELEASE(p) { if (p) { p->Release(); p = nullptr; } }

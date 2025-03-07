@@ -117,7 +117,7 @@ public:
 };
 
 
-using PixelShader = std::function<Color(float, float)>;
+using MPixelShader = std::function<Color(float, float)>;
 
 
 }
