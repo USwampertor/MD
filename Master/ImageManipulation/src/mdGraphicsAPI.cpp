@@ -289,7 +289,44 @@ GraphicsAPI::createIndexBuffer(const Vector<char>& data) {
 
 
 
+UPtr<GraphicsBuffer>
+GraphicsAPI::createConstantBuffer(const Vector<char>& data) {
+  UPtr<GraphicsBuffer> pBuffer = std::make_unique<GraphicsBuffer>();
 
+  D3D11_BUFFER_DESC desc;
+  memset(&desc, 0, sizeof(desc));
+  desc.Usage = D3D11_USAGE_DEFAULT;
+  desc.ByteWidth = data.size();
+  desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+  desc.CPUAccessFlags = 0;
+  desc.MiscFlags = 0;
+
+  // As we have already data on it, we can use this object, if we dont have data, we can set nullptr
+  D3D11_SUBRESOURCE_DATA initData;
+  initData.pSysMem = data.data();
+  initData.SysMemPitch = 0;
+  initData.SysMemSlicePitch = 0;
+
+  HRESULT hr = m_pDevice->CreateBuffer(&desc, &initData, &pBuffer->m_pBuffer);
+
+
+  if (FAILED(hr)) {
+    MessageBox(nullptr, L"Error creating vertex buffer", L"Error", MB_OK);
+    return nullptr;
+  }
+
+  return pBuffer;
+}
+
+
+void
+GraphicsAPI::writeToBuffer(const UPtr<GraphicsBuffer>& pBuffer, const Vector<char>& data) {
+  // D3D11_MAPPED_SUBRESOURCE mappedResource;
+  // m_pDeviceContext->Map(pBuffer->m_pBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+  // memcpy(mappedResource.pData, data.data(), data.size());
+  // m_pDeviceContext->Unmap(pBuffer->m_pBuffer, 0);
+  m_pDeviceContext->UpdateSubresource(pBuffer->m_pBuffer, 0, nullptr, data.data(), 0, 0);
+}
 
 void
 GraphicsAPI::queryInterface(int32_t width, int32_t height) {

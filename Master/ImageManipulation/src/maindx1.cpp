@@ -2,6 +2,8 @@
 #include "mdVector3.h"
 #include "mdColor.h"
 #include "mdGraphicsAPI.h"
+#include "mdCamera.h"
+
 // #include "mdVertex.h"
 
 
@@ -20,6 +22,8 @@ struct MODEL_VERTEX
 
 SDL_Window* g_pWindow = nullptr;
 
+Camera* g_pCamera = nullptr;
+
 UPtr<GraphicsAPI> g_pGraphicsAPI = nullptr;
 UPtr<VertexShader> g_pVertexShader = nullptr;
 UPtr<PixelShader> g_pPixelShader = nullptr;
@@ -28,11 +32,17 @@ ID3D11InputLayout* g_pInputLayout = nullptr;
 
 UPtr<GraphicsBuffer> g_pVertexBuffer = nullptr;
 UPtr<GraphicsBuffer> g_pIndexBuffer = nullptr;
+UPtr<GraphicsBuffer> g_pConstantBuffer = nullptr;
 
 int main(int argc, char* argv[]) {
 
+  struct  MatrixCollection
+  {
+    Matrix4 world;
+    Matrix4 view;
+    Matrix4 projection;
+  } matrices;
 
- 
 
   // Initialize SDL3
   if (!SDL_Init(SDL_INIT_VIDEO)) {
@@ -41,14 +51,15 @@ int main(int argc, char* argv[]) {
   }
 
   // Create an SDL3 window
-  SDL_Window* window = SDL_CreateWindow("SDL3 Window", 1280, 720, SDL_WINDOW_RESIZABLE);
-  if (!window) {
+  /*SDL_Window* window*/
+  g_pWindow = SDL_CreateWindow("SDL3 Window", 1280, 720, SDL_WINDOW_RESIZABLE);
+  if (!g_pWindow) {
     std::cerr << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
     SDL_Quit();
     return -1;
   }
 
-  auto hwnd = SDL_GetPointerProperty(SDL_GetWindowProperties(window), 
+  auto hwnd = SDL_GetPointerProperty(SDL_GetWindowProperties(g_pWindow),
                                      SDL_PROP_WINDOW_WIN32_HWND_POINTER, 
                                      nullptr);
 
@@ -128,9 +139,9 @@ int main(int argc, char* argv[]) {
   }
 
   unsigned short indices[] = {
-    3,1,0,    2,1,3,
-    6,4,5,    7,4,6,
-    11,9,8,   10,9,11,
+     3, 1, 0,  2, 1, 3,
+     6, 4, 5,  7, 4, 6,
+    11, 9, 8, 10, 9,11,
     14,12,13, 15,12,14,
     19,17,16, 18,17,19,
     22,20,21, 23,20,22
@@ -145,16 +156,34 @@ int main(int argc, char* argv[]) {
   if (!g_pVertexBuffer) {
     return -1;
   }
+  float pi = 3.141592653;
+  g_pCamera = new Camera();
+  g_pCamera->setLookAt(Vector3(5, 5, 5), Vector3(0, 0, 0), Vector3(0, 1, 0));
+  g_pCamera->setPerspective(1280, 720, 0.1f, 100.0f, pi * 0.25f);
 
+  matrices.world.identity();
+  matrices.view = g_pCamera->view;
+  matrices.projection = g_pCamera->projection;
 
-  // Create an SDL3 renderer
-  SDL_Renderer* renderer = SDL_CreateRenderer(window, nullptr);
-  if (!renderer) {
-    std::cerr << "SDL_CreateRenderer Error: " << SDL_GetError() << std::endl;
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-    return -1;
-  }
+  matrices.world.transpose();
+  matrices.view.transpose();
+  matrices.projection.transpose();
+
+  Vector<char> matrixData;
+  matrixData.resize(sizeof(matrices));
+  memcpy(matrixData.data(), &matrices, sizeof(matrices));
+
+  g_pConstantBuffer = g_pGraphicsAPI->createConstantBuffer(matrixData);
+
+//   // Create an SDL3 renderer
+//   SDL_Renderer* renderer = SDL_CreateRenderer(g_pWindow, nullptr);
+//   if (!renderer) {
+//     std::cerr << "SDL_CreateRenderer Error: " << SDL_GetError() << std::endl;
+//     SDL_DestroyWindow(g_pWindow);
+//     SDL_Quit();
+//     return -1;
+//   }
+
 
 
   // Main loop
@@ -213,6 +242,18 @@ int main(int argc, char* argv[]) {
     g_pGraphicsAPI->m_pDeviceContext->IASetIndexBuffer(g_pIndexBuffer->m_pBuffer, 
                                                        DXGI_FORMAT_R16_UINT, 
                                                        0);
+    static float rotationAngle = 0.0f;
+    rotationAngle += 0.0001f;
+    matrices.world.rotateY(rotationAngle);
+    matrices.world.transpose();
+
+    matrixData.clear();
+    matrixData.resize(sizeof(matrices));
+    memcpy(matrixData.data(), &matrices, sizeof(matrices));
+
+    g_pGraphicsAPI->writeToBuffer(g_pConstantBuffer, matrixData);
+    g_pGraphicsAPI->m_pDeviceContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer->m_pBuffer);
+
 
     g_pGraphicsAPI->m_pDeviceContext->DrawIndexed(36, 0, 0);
     g_pGraphicsAPI->m_pSwapChain->Present(0, 0);
@@ -222,8 +263,8 @@ int main(int argc, char* argv[]) {
   }
 
   // Cleanup
-  SDL_DestroyRenderer(renderer);
-  SDL_DestroyWindow(window);
+  // SDL_DestroyRenderer(renderer);
+  SDL_DestroyWindow(g_pWindow);
   SDL_Quit();
 
   return 0;

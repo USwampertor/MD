@@ -54,6 +54,11 @@ public:
   UPtr<GraphicsBuffer>
   createIndexBuffer(const Vector<char>& data);
 
+  UPtr<GraphicsBuffer>
+  createConstantBuffer(const Vector<char>& data);
+
+  void
+  writeToBuffer(const UPtr<GraphicsBuffer>& pBuffer, const Vector<char>& data);
 
 private:
 

@@ -163,10 +163,12 @@
   <ItemGroup>
     <ClCompile Include="src\maindx1.cpp" />
     <ClCompile Include="src\main.cpp.bak" />
+    <ClCompile Include="src\mdCamera.cpp" />
     <ClCompile Include="src\mdColor.cpp" />
     <ClCompile Include="src\mdGraphicsAPI.cpp" />
     <ClCompile Include="src\mdGraphicsBuffer.cpp" />
     <ClCompile Include="src\mdImage.cpp" />
+    <ClCompile Include="src\mdMatrix4.cpp" />
     <ClCompile Include="src\mdShader.cpp" />
     <ClCompile Include="src\mdTexture.cpp" />
     <ClCompile Include="src\mdTriangle.cpp" />
@@ -174,12 +176,14 @@
     <ClCompile Include="src\mdVertex.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\mdCamera.h" />
     <ClInclude Include="include\mdColor.h" />
     <ClInclude Include="include\mdGraphicsAPI.h" />
     <ClInclude Include="include\mdGraphicsBuffer.h" />
     <ClInclude Include="include\mdImage.h" />
     <ClInclude Include="include\mdImageManipulationPrerequisites.h" />
     <ClInclude Include="include\mdMathObjects.h" />
+    <ClInclude Include="include\mdMatrix4.h" />
     <ClInclude Include="include\mdShader.h" />
     <ClInclude Include="include\mdTexture.h" />
     <ClInclude Include="include\mdTriangle.h" />
