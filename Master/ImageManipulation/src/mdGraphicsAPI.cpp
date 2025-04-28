@@ -325,7 +325,7 @@ GraphicsAPI::writeToBuffer(const UPtr<GraphicsBuffer>& pBuffer, const Vector<cha
   // m_pDeviceContext->Map(pBuffer->m_pBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
   // memcpy(mappedResource.pData, data.data(), data.size());
   // m_pDeviceContext->Unmap(pBuffer->m_pBuffer, 0);
-  m_pDeviceContext->UpdateSubresource(pBuffer->m_pBuffer, 0, nullptr, data.data(), 0, 0);
+  m_pDeviceContext->UpdateSubresource1(pBuffer->m_pBuffer, 0, nullptr, data.data(), 0, 0, 0);
 }
 
 void
@@ -368,7 +368,10 @@ GraphicsAPI::createTexture(int32_t width,
                            D3D11_USAGE usage /* = D3D11_USAGE_DEFAULT */, 
                            uint32_t bindFlags /* = D3D11_BIND_SHADER_RESOURCE */, 
                            uint32_t cpuAccessFlags /* = 0 */, 
-                           uint32_t mipFlags /* = 1 */) {
+                           uint32_t mipFlags /* = 1 */,
+                           ID3D11ShaderResourceView** ppSRV,
+                           ID3D11RenderTargetView** ppRTV,
+                           ID3D11DepthStencilView** ppDSV /*= nullptr*/) {
 
   ID3D11Texture2D* pTexture = nullptr;
   D3D11_TEXTURE2D_DESC desc;
@@ -393,7 +396,45 @@ GraphicsAPI::createTexture(int32_t width,
     return nullptr;
   }
 
-  
+  if (ppSRV != nullptr) {
+    if (bindFlags & D3D11_BIND_SHADER_RESOURCE) {
+
+      D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = CD3D11_SHADER_RESOURCE_VIEW_DESC();
+      srvDesc.Format = format;
+      srvDesc.Texture2D.MipLevels = mipFlags == 1 ? 1 : -1;
+      srvDesc.Texture2D.MostDetailedMip = 0;
+      srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+      m_pDevice->CreateShaderResourceView(pTexture, &srvDesc, ppSRV);
+
+
+    }
+  }
+
+  if (ppSRV != nullptr) {
+    if (bindFlags & D3D11_BIND_RENDER_TARGET) {
+
+      D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = CD3D11_RENDER_TARGET_VIEW_DESC();
+      rtvDesc.Format = format;
+      rtvDesc.Texture2D.MipSlice = 0;
+      rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+      m_pDevice->CreateRenderTargetView(pTexture, &rtvDesc, ppRTV);
+
+
+    }
+  }
+
+  if (ppDSV != nullptr) {
+    if (bindFlags & D3D11_BIND_DEPTH_STENCIL) {
+
+      D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = CD3D11_DEPTH_STENCIL_VIEW_DESC();
+      dsvDesc.Format = format;
+      dsvDesc.Texture2D.MipSlice = 0;
+      dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+      m_pDevice->CreateDepthStencilView(pTexture, &dsvDesc, ppDSV);
+
+
+    }
+  }
 
   return pTexture;
 

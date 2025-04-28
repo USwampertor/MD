@@ -27,7 +27,6 @@ namespace MD {
       }
     }
     return temp;
-
   }
 
   Matrix4
@@ -498,28 +497,17 @@ namespace MD {
 
   void
   Matrix4::rotateX(const float& angle) {
+    // identity();
 
+    m[1][1] = cos(angle);
+    m[1][2] = -sin(angle);
+    m[2][1] = sin(angle);
+    m[2][2] = cos(angle);
   }
 
   void
   Matrix4::rotateY(const float& angle) {
-//     float c = std::cosf(angle);
-//     float s = std::sinf(angle);
-// 
-//     float m00 = m[0][0];
-//     float m02 = m[0][2];
-//     float m10 = m[1][0];
-//     float m12 = m[1][2];
-//     float m20 = m[2][0];
-//     float m22 = m[2][2];
-// 
-//     m[0][0] = m00 * c + m[2][0] * s;
-//     m[0][2] = m02 * -s + m[2][2] * c;
-//     m[1][0] = m10 * c + m[2][0] * s;
-//     m[1][2] = m12 * -s + m[2][2] * c;
-//     m[2][0] = m20 * c + m[2][0] * s;
-//     m[2][2] = m22 * -s + m[2][2] * c;
-    identity();
+    // identity();
 
     m[0][0] = cos(angle);
     m[0][2] = sin(angle);
@@ -530,8 +518,34 @@ namespace MD {
 
   void
   Matrix4::rotateZ(const float& angle) {
-    
+    // identity();
+
+    m[0][0] = cos(angle);
+    m[0][1] = -sin(angle);
+    m[1][0] = sin(angle);
+    m[1][1] = cos(angle);
   }
+
+  void
+  Matrix4::scale(const float& scale) {
+    // identity();
+    m[0][0] = scale;
+    m[1][1] = scale;
+    m[2][2] = scale;
+  }
+
+  void 
+  Matrix4::scale(const Vector3& scale) {
+    // Set the diagonal elements to the scaling factors
+    // identity();
+    m[0][0] = scale.x;
+    m[1][1] = scale.y;
+    m[2][2] = scale.z;
+
+    // Ensure the last row and column remain unchanged (for homogeneous coordinates)
+    // m[3][3] = 1.0f; // Homogeneous coordinate
+  }
+
 
   Vector3
   Matrix4::transformPosition(const Vector3& v) const {
@@ -547,6 +561,24 @@ namespace MD {
                    v.x * m[0][2] + v.y * m[1][2] + v.z * m[2][2] + 0.0f * m[3][2]);
   }
   
+  Vector3
+  Matrix4::getForwardVector() const {
+    Vector3 forward(_m.m20, _m.m21, _m.m22);
+    return forward.normalized(); // Assuming Vector3 has a Normalized() method
+  }
+
+  Vector3
+  Matrix4::getRightVector() const {
+    Vector3 forward(_m.m00, _m.m01, _m.m02);
+    return forward.normalized(); // Assuming Vector3 has a Normalized() method
+  }
+
+  Vector3
+  Matrix4::getUpVector() const {
+    Vector3 forward(_m.m10, _m.m11, _m.m12);
+    return forward.normalized(); // Assuming Vector3 has a Normalized() method
+  }
+
   String
   Matrix4::toString() {
     return Utils::format("[(%2.2f), \t (%2.2f), \t (%2.2f), \t (%2.2f)]\n[(%2.2f), \t (%2.2f), \t (%2.2f), \t (%2.2f)]\n[(%2.2f), \t (%2.2f), \t (%2.2f), \t (%2.2f)]\n[(%2.2f), \t (%2.2f), \t (%2.2f), \t (%2.2f)]\n", 

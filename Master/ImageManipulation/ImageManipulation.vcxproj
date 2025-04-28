@@ -169,6 +169,7 @@
     <ClCompile Include="src\mdGraphicsBuffer.cpp" />
     <ClCompile Include="src\mdImage.cpp" />
     <ClCompile Include="src\mdMatrix4.cpp" />
+    <ClCompile Include="src\mdModel.cpp" />
     <ClCompile Include="src\mdShader.cpp" />
     <ClCompile Include="src\mdTexture.cpp" />
     <ClCompile Include="src\mdTriangle.cpp" />
@@ -184,6 +185,7 @@
     <ClInclude Include="include\mdImageManipulationPrerequisites.h" />
     <ClInclude Include="include\mdMathObjects.h" />
     <ClInclude Include="include\mdMatrix4.h" />
+    <ClInclude Include="include\mdModel.h" />
     <ClInclude Include="include\mdShader.h" />
     <ClInclude Include="include\mdTexture.h" />
     <ClInclude Include="include\mdTriangle.h" />

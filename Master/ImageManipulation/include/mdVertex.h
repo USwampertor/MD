@@ -2,7 +2,7 @@
 
 #include "mdImageManipulationPrerequisites.h"
 #include "mdVector3.h"
-
+#include "mdColor.h"
 namespace MD {
 
 class Vertex : public Vector3
@@ -18,7 +18,7 @@ public:
     : Vector3(copy),
       u(nu),
       v(nv) {}
-
+  Color c;
   float u;
   float v;
 };

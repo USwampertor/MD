@@ -183,13 +183,27 @@ class Matrix4
   void
   rotateZ(const float& angle);
 
+  void
+  scale(const Vector3& scale);
+
+  void
+  scale(const float& scale);
+
   Vector3
   transformPosition(const Vector3& v) const;
 
   Vector3
   transformDirection(const Vector3& v) const;
 
+  Vector3
+  getForwardVector() const;
   
+  Vector3
+  getRightVector() const;
+
+  Vector3
+  getUpVector() const;
+
   String
   toString();
 

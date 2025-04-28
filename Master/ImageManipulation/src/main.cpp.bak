@@ -1,765 +1,766 @@
-
-#include "mdImage.h"
-#include "mdTexture.h"
-#include "mdTriangle.h"
-#include "mdWindow.h"
-
-
-#include <iostream>
-
-using namespace MD;
-
-Vertex rotateVertex(const Vertex& v, 
-                    float angleX, 
-                    float angleY, 
-                    float angleZ, 
-                    float cx, 
-                    float cy, 
-                    float cz) {
-  Vertex result = v;
-
-  result.x -= cx;
-  result.y -= cy;
-  result.z -= cz;
-
-  float cosX = cos(angleX);
-  float sinX = sin(angleX);
-  float y = result.y * cosX - result.z * sinX;
-  float z = result.y * sinX + result.z * cosX;
-  result.y = y;
-  result.z = z;
-
-  float cosY = cos(angleY);
-  float sinY = sin(angleY);
-  float x = result.x * cosY + result.z * sinY;
-  z = -result.x * sinY + result.z * cosY;
-  result.x = x;
-  result.z = z;
-
-  float cosZ = cos(angleZ);
-  float sinZ = sin(angleZ);
-  x = result.x * cosZ - result.y * sinZ;
-  y = result.x * sinZ + result.y * cosZ;
-  result.x = x;
-  result.y = y;
-
-  // Translate back
-  result.x += cx;
-  result.y += cy;
-  result.z += cz;
-
-  return result;
-}
-
-float implicitLineEquation(const Vertex& p, const Vertex& p0, const Vertex& p1) {
-  return (p0.y - p1.y) * p.x + (p1.x - p0.x) * p.y + (p0.x * p1.y - p1.x * p0.y);
-}
-
-Vertex getBarycentricCoords(const Vertex& A, const Vertex& B, const Vertex& C, const Vector3& P) {
-  Vector3 v0 = B - A;
-  Vector3 v1 = C - A;
-  Vector3 v2 = P - A;
-
-  float d00 = Vector3::dot(v0, v0);
-  float d01 = Vector3::dot(v0, v1);
-  float d11 = Vector3::dot(v1, v1);
-  float d20 = Vector3::dot(v2, v0);
-  float d21 = Vector3::dot(v2, v1);
-
-  float denom = d00 * d11 - d01 * d01;
-
-  float v = (d11 * d20 - d01 * d21) / denom;
-  float w = (d00 * d21 - d01 * d20) / denom;
-  float u = 1.0f - v - w;
-
-  return Vector3(u, v, w);
-}
-
-void drawTopTriangle(Triangle t, Texture& tex, Image& img, const MPixelShader& pShader) {
-  Vertex p0 = t.v0;
-  Vertex p1 = t.v1; 
-  Vertex p2 = t.v2;
-
-  if (p1.x < p0.x) { std::swap(p0, p1); }
-
-  int32_t height = p2.y - p0.y;
-  if (height <= 0) {
-    return;
-  }
-
-  float dxLeft  = static_cast<float>(p2.x - p0.x) / height;
-  float dxRight = static_cast<float>(p2.x - p1.x) / height;
-
-  float duLeft  = (p2.u - p0.u) / height;
-  float dvLeft  = (p2.v - p0.v) / height;
-  float duRight = (p2.u - p1.u) / height;
-  float dvRight = (p2.v - p1.v) / height;
-
-  float xs = p0.x;
-  float xe = p1.x;
-  float us = p0.u;
-  float vs = p0.v;
-  float ue = p1.u;
-  float ve = p1.v;
-
-  for (int y = p0.y; y <= p2.y; ++y) {
-    int32_t left = static_cast<int32_t>(xs);
-    int32_t right = static_cast<int32_t>(xe);
-    if (left > right) {
-      std::swap(left, right);
-    }
-
-    float u = us;
-    float v = vs;
-
-    float du = (ue - us) / (right - left + 1);
-    float dv = (ve - vs) / (right - left + 1);
-
-    for (int32_t x = std::max(0, left); x <= std::min(static_cast<int32_t>(img.m_width - 1), right); ++x) {
-      // TODO: CHECK CLIPPING
-
-      if (y > 0 && y < img.m_height) {
-        Color pColor = pShader(u, v);
-
-        img.setPixel(x, y, pColor);
-      }
-      u += du;
-      v += dv;
-    }
-
-    xs += dxLeft;
-    xe += dxRight;
-    us += duLeft;
-    vs += dvLeft;
-    ue += duRight;
-    ve += dvRight;
-
-  }
-}
-
-void drawBottomTriangle(Triangle t, Texture& tex, Image& img, const MPixelShader& pShader) {
-  Vertex p0 = t.v0;
-  Vertex p1 = t.v1;
-  Vertex p2 = t.v2;
-
-  if (p2.x < p1.x) { std::swap(p1, p2); }
-
-  int32_t height = p2.y - p0.y;
-  if (height <= 0) {
-    return;
-  }
-
-  float dxLeft  = static_cast<float>(p1.x - p0.x) / height;
-  float dxRight = static_cast<float>(p2.x - p0.x) / height;
-
-  float duLeft  = (p1.u - p0.u) / height;
-  float dvLeft  = (p1.v - p0.v) / height;
-  float duRight = (p2.u - p0.u) / height;
-  float dvRight = (p2.v - p0.v) / height;
-
-  float xs = p0.x;
-  float xe = p0.x;
-  float us = p0.u;
-  float vs = p0.v;
-  float ue = p0.u;
-  float ve = p0.v;
-
-  for (int y = p0.y; y <= p2.y; ++y) {
-    int32_t left = static_cast<int32_t>(xs);
-    int32_t right = static_cast<int32_t>(xe);
-    if (left > right) {
-      std::swap(left, right);
-    }
-
-    float u = us;
-    float v = vs;
-
-    float du = (ue - us) / (right - left + 1);
-    float dv = (ve - vs) / (right - left + 1);
-
-    for (int32_t x = std::max(0, left); x <= std::min(static_cast<int32_t>(img.m_width - 1), right); ++x) {
-     
-      // TODO: CHECK CLIPPING
-      if (y > 0 && y < img.m_height) {
-        Color pColor = pShader(u, v);
-
-        img.setPixel(x, y, pColor);
-      }
-      u += du;
-      v += dv;
-    }
-
-    xs += dxLeft;
-    xe += dxRight;
-    us += duLeft;
-    vs += dvLeft;
-    ue += duRight;
-    ve += dvRight;
-
-  }
-
-}
-
-void
-fillTriangle(const Triangle& t, Texture& tex, Image& img, const Color& toColor, const MPixelShader& pShader) {
-  // if all three triangle edges have different y, we split it into 2
-  Vertex p0 = t.v0;
-  Vertex p1 = t.v1;
-  Vertex p2 = t.v2;
-
-  if (p0.y > p1.y) { std::swap(p0, p1); }
-  if (p0.y > p2.y) { std::swap(p0, p2); }
-  if (p1.y > p2.y) { std::swap(p1, p2); }
-
-  // Barycentric coordinate
-  if (p1.y == p2.y) {
-    drawBottomTriangle(Triangle(p0, p1, p2), tex, img, pShader);
-  }
-  else if (p0.y == p1.y) {
-    drawTopTriangle(Triangle(p0, p1, p2), tex, img, pShader);
-  }
-  else {
-    // Split the triangle into a flat-bottomed and a flat-topped triangle
-    float tVal = static_cast<float>(p1.y - p0.y) / static_cast<float>(p2.y - p0.y);
-    // int newX = static_cast<int32_t>(p0.x + tVal * (p2.x - p0.x));
-    // 
-    // // Calculate barycentric coordinates for the new vertex
-    // Vector3 barycentric = getBarycentricCoords(p0, p1, p2, Vector3(newX, p1.y, 0));
-    // 
-    // float newU = barycentric.x * p0.u + barycentric.y * p1.u + barycentric.z * p2.u;
-    // float newV = barycentric.x * p0.v + barycentric.y * p1.v + barycentric.z * p2.v;
-    // 
-    // Vertex newVtx(static_cast<float>(newX), p1.y, 0, newU, newV);
-    // 
-    // Triangle t1(p0, newVtx, p1);
-    // Triangle t2(p1, newVtx, p2);
-
-    int newX = p0.x + 
-               static_cast<int32_t>(0.5f + 
-                                    static_cast<float>(p1.y - p0.y) * 
-                                    static_cast<float>(p2.x - p0.x) /
-                                    static_cast<float>(p2.y - p0.y));
-    
-    float newU = p0.u + ((p1.y - p0.y) * ((p2.u - p0.u) / (p2.y - p0.y)));
-    float newV = p0.v + ((p1.y - p0.y) * ((p2.v - p0.v) / (p2.y - p0.y)));
-    Vertex newVtx(static_cast<float>(newX), p1.y, 0, newU, newV);
-    
-    Color c0 = Color::RED;
-    Color c1 = Color::GREEN;
-    Color c2 = Color::BLUE;
-    
-    Color nC = t.c0 + ((t.c2 - t.c0) * (p1.y - p0.y) / (p2.y - p0.y));
-    
-    Triangle t1(p0, newVtx, p1);
-    Triangle t2(p1, newVtx, p2);
-
-    t1.c0 = t.c0;
-    t1.c1 = t.c1;
-    t1.c2 = t.c1;
-
-    t2.c0 = t.c1;
-    t2.c1 = t.c2;
-    t2.c2 = t.c2;
-
-    drawBottomTriangle(t1, tex, img, pShader);
-    drawTopTriangle(t2, tex, img, pShader);
-  }
-}
-
-
-int main(int argc, char* argv[]) {
-
-
-  
-
-
-
-  std::cout << argv[0] << std::endl;
-
-  Image sourceFile;
-  Image destinyFile;
-  String sourceFStr = "portrait.bmp";
-  String resourcesPath = Utils::format("%s/../../resources",
-                                       Path(argv[0]).parent_path().string().c_str());
-  String binPath = Utils::format("%s", Path(argv[0]).parent_path().string().c_str());
-  // String destFStr = "maiden.bmp";
-  String sourceString1 = Utils::format("%s/%s", resourcesPath.c_str(), sourceFStr.c_str());
-  String destinyString;
-  // String sourceString2 = Utils::format("%s/%s",
-  //                                      Path(argv[0]).parent_path().string().c_str(),
-  //                                      destFStr.c_str());
-
-//   sourceFile.decode(sourceString1);
-//   destinyFile.create(3000, 2000, 24);
-//   destinyFile.clear(Color::BLACK);
-//   // destinyFile.decode(sourceString2);
 // 
-//   destinyFile.bitBlt(sourceFile, 
-//                      Rect(0, 0, sourceFile.m_width, sourceFile.m_height),
-//                      Rect(0, 0, destinyFile.m_width, destinyFile.m_height),
-//                      eTextureMode::STRETCH);
-//   destinyString = Utils::format("%s/res_stretch.bmp", binPath.c_str());
-//   destinyFile.encode(destinyString, eImageFormat::BMP);
-//   destinyFile.clear(Color::BLACK);
-// 
-//   destinyFile.bitBlt(sourceFile, 
-//                      Rect(0, 0, sourceFile.m_width, sourceFile.m_height),
-//                      Rect(0, 0, destinyFile.m_width, destinyFile.m_height),
-//                      eTextureMode::CLAMP);
-//   destinyString = Utils::format("%s/res_clamp.bmp", binPath.c_str());
-//   destinyFile.encode(destinyString, eImageFormat::BMP);
-//   destinyFile.clear(Color::BLACK);
-// 
-//   destinyFile.bitBlt(sourceFile, 
-//                      Rect(0, 0, sourceFile.m_width, sourceFile.m_height),
-//                      Rect(0, 0, sourceFile.m_width * 2, sourceFile.m_height),
-//                      eTextureMode::MIRROR);
-//   destinyString = Utils::format("%s/res_mirror.bmp", binPath.c_str());
-//   destinyFile.encode(destinyString, eImageFormat::BMP);
-//   destinyFile.clear(Color::BLACK);
+// #include "mdImage.h"
+// #include "mdTexture.h"
+// #include "mdTriangle.h"
+// #include "mdWindow.h"
 // 
 // 
-//   destinyFile.bitBlt(sourceFile, 
-//                      Rect(0, 0, sourceFile.m_width, sourceFile.m_height),
-//                      Rect(0, 0, destinyFile.m_width, destinyFile.m_height),
-//                      eTextureMode::REPEAT);
-//   destinyString = Utils::format("%s/res_repeat.bmp", binPath.c_str());
-//   destinyFile.encode(destinyString, eImageFormat::BMP);
-//   destinyFile.clear(Color::BLACK);
+// #include <iostream>
 // 
-//   destinyFile.bitBlt(sourceFile, 
-//                      Rect(0, 0, sourceFile.m_width, sourceFile.m_height),
-//                      Rect(0, 0, sourceFile.m_width, sourceFile.m_height),
-//                      eTextureMode::NONE);
-//   destinyString = Utils::format("%s/res_none.bmp", binPath.c_str());
-//   destinyFile.encode(destinyString, eImageFormat::BMP);
+// using namespace MD;
+// using MPixelShader = std::function<Color(float, float)>;
 // 
-//   Color filteredColor;
-//   filteredColor.setUint(184, 184, 184);
-//   destinyFile.filterPixel(Rect(0, 0, destinyFile.m_width, destinyFile.m_height), filteredColor);
-//   destinyString = Utils::format("%s/res_filtered.bmp", binPath.c_str());
-//   destinyFile.encode(destinyString, eImageFormat::BMP);
+// Vertex rotateVertex(const Vertex& v, 
+//                     float angleX, 
+//                     float angleY, 
+//                     float angleZ, 
+//                     float cx, 
+//                     float cy, 
+//                     float cz) {
+//   Vertex result = v;
 // 
-//   destinyFile.clear(Color::BLACK);
-
-  Image imgScreen;
-  imgScreen.create(1920, 1080, 32);
-  imgScreen.clear(Color::MISSING);
-
-  Image imgTerrain;
-  imgTerrain.decode(Utils::format("%s/terrain2.bmp", resourcesPath.c_str()));
-
-  Image imgHorse;
-  imgHorse.decode(Utils::format("%s/galina.bmp", resourcesPath.c_str()));
-
-  imgScreen.bitBlt(imgTerrain, 
-                   Rect(0, 0, imgTerrain.m_width, imgTerrain.m_height), 
-                   Rect(0, 0, imgTerrain.m_width, imgTerrain.m_width));
-
-
-  Texture horseTexture;
-  horseTexture.setImage(imgHorse);
-  
-  // horseTexture.draw(imgScreen,
-  //                   0,
-  //                   0,
-  //                   Rect(0, 0, imgHorse.m_width, imgHorse.m_height),
-  //                   eTextureMode::WRAP, 
-  //                   eBlendMode::ADDITIVE);
-
-  // for (uint32_t i = 0; i < imgScreen.m_height; ++i) {
-  //   for (uint32_t j = 0; j < imgScreen.m_width; ++j) {
-  //     float u = static_cast<float>(j) / (imgScreen.m_width - 1);
-  //     float v = static_cast<float>(i) / (imgScreen.m_height - 1);
-  //     Pixel p = horseTexture.sample(u, v, eTextureMode::CLAMP, eSamplerFilter::LINEAR);
-  //     imgScreen.setPixel(j, i, p);
-  //   }
-  // }
-
-  imgScreen.bresenhamLine(-100, -100, 300, 20, Color::WHITE);
-
-  //////////////////////////////////////////////////////////////////////////
-
-  // Rotation center
-  float cx = 0, cy = 0, cz = 0;
-
-  // Rotation angles
-  float angleX = 0, angleY = 0, angleZ = 0;
-
-
-  Vertex p0 = Vertex(100, 100, 0, 0, 0);
-  Vertex p1 = Vertex(100, 300, 0, 1, 0);
-  Vertex p2 = Vertex(300, 100, 0, 0, 1);
-  Vertex p3 = Vertex(300, 300, 0, 1, 1);
-
-  Triangle t0(p0, p1, p2);
-  Triangle t1(p1, p2, p3);
-
-  Vector3 normal;
-
-  Vector3 v0v1 = t0.v1 - t0.v0;
-  Vector3 v0v2 = t0.v2 - t0.v0;
-
-  normal = (v0v1 ^ v0v2).normalized();
-  Vector3 view(0, 0, -1);
-  float intensity = normal | view;
-
-  //triangle is facing forwards
-  if (intensity > 0) {
-
-  }
-
-  // imgScreen.bresenhamLine(t.v0.x, t.v0.y, t.v1.x, t.v1.y, Color::GREEN);
-  // imgScreen.bresenhamLine(t.v1.x, t.v1.y, t.v2.x, t.v2.y, Color::GREEN);
-  // imgScreen.bresenhamLine(t.v2.x, t.v2.y, t.v0.x, t.v0.y, Color::GREEN);
-
-  MPixelShader uvPShader = [&horseTexture](float u, float v) {
-    Color c(u, v, 0.0f, 1.0f); 
-    return c;
-  };
-
-  MPixelShader texPShader = [&horseTexture](float u, float v) {
-    Color c/*(u, v, 0.0f, 1.0f);*/ = horseTexture.sample(u, v, eTextureMode::CLAMP, eSamplerFilter::LINEAR);
-    return c;
-  };
-
-  MPixelShader greyPShader = [&horseTexture](float u, float v) {
-    Color c = horseTexture.sample(u, v, eTextureMode::CLAMP, eSamplerFilter::LINEAR);
-    Vector3 grey(0.299f, 0.587f, 0.114f);
-    Vector3 colorV(c.m_r, c.m_g, c.m_b);
-    float  intensity = grey | colorV;
-
-    // unsigned char rV = static_cast<unsigned char>(intensity * 255);
-
-    c.setFloat(intensity, intensity, intensity);
-    return c;
-  };
-
-  MPixelShader kernelPShader = [&horseTexture](float u, float v) {
-
-    float kernelBlur[] = {
-      0.0625,0.125,0.0625,
-      0.125, 0.25, 0.125,
-      0.0625,0.125,0.0625
-    };
-
-    float kernelBSobel[] = {
-      -1,-2,-1,
-      0, 0, 0,
-      1,2,1
-    };
-
-
-    float kernelEmboss[] = {
-      -2,-1, 0,
-      -1, 1, 1,
-      0,1,2
-    };
-
-    float kernelIdentity[] = {
-      0,0, 0,
-      0, 1, 0,
-      0,0,0
-    };
-
-    float kernelLSoble[] = {
-      1,0, -1,
-      2,0, -2,
-      1,0, -1
-    };
-
-    float kernelOutline[] = {
-      -1, -1, -1,
-      -1, 8, -1,
-      -1, -1, -1
-    };
-
-    float kernelRSoble[] = {
-      -1,0,1  ,
-      -2,0,2  ,
-      -1,0,1
-    };
-
-    float kernelSharpen[] = {
-      0,-1,0  ,
-      -1,5,-1  ,
-      0,-1,0
-    };
-
-    
-    float kernelTSobel[] = {
-      1,2,1,
-      0, 0, 0,
-      -1,-2,-1
-    };
-
-    float* kernel = kernelTSobel;
-
-    float du = 1.0f / horseTexture.m_img.m_width;
-    float dv = 1.0f / horseTexture.m_img.m_height;
-
-    Color c00 = horseTexture.sample(u - du, v - dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
-    Color c01 = horseTexture.sample(u - du, v     , eTextureMode::CLAMP, eSamplerFilter::POINT);
-    Color c02 = horseTexture.sample(u - du, v + dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
-    Color c10 = horseTexture.sample(u     , v - dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
-    Color c11 = horseTexture.sample(u     , v     , eTextureMode::CLAMP, eSamplerFilter::POINT);
-    Color c12 = horseTexture.sample(u     , v + dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
-    Color c20 = horseTexture.sample(u + du, v - dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
-    Color c21 = horseTexture.sample(u + du, v     , eTextureMode::CLAMP, eSamplerFilter::POINT);
-    Color c22 = horseTexture.sample(u + du, v + dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
-
-    // Color avg = (c00 + c01 + c02 + c10 + c11 + c12 + c20 + c21 + c22) / 9.0f;
-
-    Color finalVal = c00 * kernel[0] + c10 * kernel[1] + c20 * kernel[2] +
-                     c01 * kernel[3] + c11 * kernel[4] + c21 * kernel[5] +
-                     c02 * kernel[6] + c12 * kernel[7] + c22 * kernel[8];
-    finalVal.saturate();
-    float grey = finalVal.toGrey();
-
-    return Color(grey, grey, grey);
-  };
-
-
-  MPixelShader normalPShader = [&horseTexture](float u, float v) {
-
-    float kernelLSoble[] = {
-      1,0, -1,
-      2,0, -2,
-      1,0, -1
-    };
-
-    float kernelTSobel[] = {
-      1,2,1,
-      0, 0, 0,
-      -1,-2,-1
-    };
-
-
-    float du = 1.0f / horseTexture.m_img.m_width;
-    float dv = 1.0f / horseTexture.m_img.m_height;
-
-    Color c00 = horseTexture.sample(u - du, v - dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
-    Color c01 = horseTexture.sample(u - du, v, eTextureMode::CLAMP, eSamplerFilter::POINT);
-    Color c02 = horseTexture.sample(u - du, v + dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
-    Color c10 = horseTexture.sample(u, v - dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
-    Color c11 = horseTexture.sample(u, v, eTextureMode::CLAMP, eSamplerFilter::POINT);
-    Color c12 = horseTexture.sample(u, v + dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
-    Color c20 = horseTexture.sample(u + du, v - dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
-    Color c21 = horseTexture.sample(u + du, v, eTextureMode::CLAMP, eSamplerFilter::POINT);
-    Color c22 = horseTexture.sample(u + du, v + dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
-
-    // Color avg = (c00 + c01 + c02 + c10 + c11 + c12 + c20 + c21 + c22) / 9.0f;
-
-    float* kernel = kernelLSoble;
-    Color finalValX = c00 * kernel[0] + c10 * kernel[1] + c20 * kernel[2] +
-                      c01 * kernel[3] + c11 * kernel[4] + c21 * kernel[5] +
-                      c02 * kernel[6] + c12 * kernel[7] + c22 * kernel[8];
-
-    kernel = kernelTSobel;
-    Color finalValY = c00 * kernel[0] + c10 * kernel[1] + c20 * kernel[2] +
-                      c01 * kernel[3] + c11 * kernel[4] + c21 * kernel[5] +
-                      c02 * kernel[6] + c12 * kernel[7] + c22 * kernel[8];
-
-    finalValX.saturate();
-    finalValY.saturate();
-
-    float sx = finalValX.toGrey();
-    float sy = finalValY.toGrey();
-
-    Color normal(sx, sy, 1, 1);
-
-    return normal;
-  };
-
-  fillTriangle(t0, horseTexture, imgScreen, Color::CYAN, uvPShader);
-  fillTriangle(t1, horseTexture, imgScreen, Color::CYAN, uvPShader);
-
-  destinyString = Utils::format("%s/res_horse.bmp", binPath.c_str());
-  imgScreen.encode(destinyString);
-
-
-
-  // Initialize SDL3
-  if (!SDL_Init(SDL_INIT_VIDEO)) {
-    std::cerr << "SDL_Init Error: " << SDL_GetError() << std::endl;
-    return -1;
-  }
-
-  // Create an SDL3 window
-  SDL_Window* window = SDL_CreateWindow("SDL3 Window", 1920, 1080, SDL_WINDOW_OPENGL);
-  if (!window) {
-    std::cerr << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
-    SDL_Quit();
-    return -1;
-  }
-
-  // Create an SDL3 renderer
-  SDL_Renderer* renderer = SDL_CreateRenderer(window, nullptr);
-  if (!renderer) {
-    std::cerr << "SDL_CreateRenderer Error: " << SDL_GetError() << std::endl;
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-    return -1;
-  }
-
-  SDL_Texture* sdlTexture = nullptr;
-
-  //////////////////////////////////////////////////////////////////////////
-  std::vector<Vertex> edges = {
-    // ftl
-    Vertex(500, 500, 0), 
-
-    // ftr
-    Vertex(800, 500, 0), 
-
-    // fbl
-    Vertex(500, 800, 0),
-
-    // fbr
-    Vertex(800, 800, 0),
-
-    // btl
-    Vertex(500,800, -300),
-    // btr
-    Vertex(500,500, -300),
-
-    // bbl
-    Vertex(800,800, -300), 
-
-    // bbr
-    Vertex(800,500, -300) 
-  };
-  
-
-  // Cube faces (each face is 2 triangles)
-  // 
-  // 
-  //////////////////////////////////////////////////////////////////////////
-  // TODO: SIMPLIFY THIS
-
-  std::vector<Triangle> cubeFaces = {
-    // Back
-    {Vertex(800,500,-300, 0, 0),Vertex(500,500,-300, 1, 0), Vertex(800,800,-300, 0, 1)},
-    {Vertex(500,500,-300, 1, 0),Vertex(500,800,-300, 1, 1), Vertex(800,800,-300, 0, 1)},
-
-    // Front
-    {Vertex(500,500, 0, 0, 0),Vertex(800,500, 0, 1, 0), Vertex(500,800, 0, 0, 1)},
-    {Vertex(800,500, 0, 1, 0),Vertex(800,800, 0, 1, 1), Vertex(500,800, 0, 0, 1)},
-    
-    // Top Side
-    {Vertex(500,500, -300, 0, 0),Vertex(800,500, -300, 1, 0), Vertex(500,500, 0, 0, 1)},
-    {Vertex(800,500, -300, 1, 0),Vertex(800,500, 0, 1, 1), Vertex(500,500, 0, 0, 1)},
-
-    // Bottom Side
-    {Vertex(500, 800, 0, 0, 0),Vertex(800,800, 0, 1, 0), Vertex(500,800, -300, 0, 1)},
-    {Vertex(800, 800, 0, 1, 0),Vertex(800,800, -300, 1, 1), Vertex(500,800, -300, 0, 1)},
-
-    // Left Side
-    {Vertex(500,500,-300, 0, 0),Vertex(500,500, 0, 1, 0), Vertex(500,800,-300, 0, 1)},
-    {Vertex(500,500, 0, 1, 0),Vertex(500,800, 0, 1, 1), Vertex(500,800,-300, 0, 1)},
-    
-    // Right Side
-    {Vertex(800,500, -300, 1, 0),Vertex(800,800, -300, 1, 1), Vertex(800,800, 0, 0, 1)},
-    {Vertex(800,500, 0, 0, 0),Vertex(800,500, -300, 1, 0), Vertex(800,800, 0, 0, 1)}
-
-  };
-
-  //////////////////////////////////////////////////////////////////////////
-
-
-  // Main loop
-  bool running = true;
-  while (running) {
-    imgScreen.clear();
-    SDL_Event event;
-    while (SDL_PollEvent(&event)) {
-      if (event.type == SDL_EVENT_QUIT) {
-        running = false;
-      }
-    }
-
-    // Rotate the cube
-    angleX += 0.1f;
-    angleY += 0.1f;
-    angleZ += 0.1f;
-
-    for (const auto& tri : cubeFaces) {
-      Triangle rotatedTri(
-        rotateVertex(tri.v0, angleX, angleY, angleZ, 650, 650, -150),
-        rotateVertex(tri.v1, angleX, angleY, angleZ, 650, 650, -150),
-        rotateVertex(tri.v2, angleX, angleY, angleZ, 650, 650, -150)
-      );
-
-      v0v1 = rotatedTri.v1 - rotatedTri.v0;
-      v0v2 = rotatedTri.v2 - rotatedTri.v0;
-
-      normal = Vector3::cross(v0v1, v0v2);
-      normal = normal.normalized();
-      intensity = normal | view;
-      //triangle is facing forwards
-      if (intensity > 0) {
-        // Draw the triangle
-        fillTriangle(rotatedTri, horseTexture, imgScreen, Color::CYAN, texPShader);
-      }
-
-    }
-
-    sdlTexture = SDL_CreateTexture(renderer,
-                                   SDL_PIXELFORMAT_RGBA128_FLOAT,
-                                   SDL_TEXTUREACCESS_STREAMING,
-                                   imgScreen.m_width,
-                                   imgScreen.m_height);
-
-    // Clear screen with a color
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-    SDL_RenderClear(renderer);
-
-    SDL_Surface* surface = nullptr;
-
-    imgScreen.setPixel(Utils::getRandom(100), 
-                       Utils::getRandom(100),
-                       Color::BLACK);
-
-    // Add something to create pixels randomly
-
-    SDL_Surface* imgSurface = SDL_CreateSurfaceFrom(imgScreen.m_width, 
-                                                    imgScreen.m_height, 
-                                                    SDL_PIXELFORMAT_RGBA128_FLOAT,
-                                                    imgScreen.m_pixels.data(), 
-                                                    imgScreen.m_width * 16); // pitch is width * bytes per pixel
-
-    if (SDL_LockTextureToSurface(sdlTexture, nullptr, &surface)) {
-      SDL_BlitSurface(imgSurface, nullptr, surface, nullptr);
-      // SDL_Rect r;
-      // SDL_FillSurfaceRect(surface,
-      //                     nullptr,
-      //                     SDL_MapRGB(SDL_GetPixelFormatDetails(surface->format), 
-      //                                nullptr, 0, 0, 0));
-      // 
-      // r.w = sdlTexture->w;
-      // r.h = sdlTexture->h;
-      // r.x = 0;
-      // r.y = static_cast<int>((static_cast<float>(sdlTexture->)));
-
-      // Copy to GPU
-      SDL_UnlockTexture(sdlTexture);
-    }
-    SDL_DestroySurface(imgSurface);
-
-    SDL_FRect dstRect = { 0, 0, imgScreen.m_width, imgScreen.m_height };
-    SDL_RenderTexture(renderer, sdlTexture, nullptr, &dstRect);
-
-    // Present the frame
-    SDL_RenderPresent(renderer);
-  }
-
-  // Cleanup
-  SDL_DestroyRenderer(renderer);
-  SDL_DestroyWindow(window);
-  SDL_Quit();
-
-
-
-  return 0;
-}
-
+//   result.x -= cx;
+//   result.y -= cy;
+//   result.z -= cz;
+// 
+//   float cosX = cos(angleX);
+//   float sinX = sin(angleX);
+//   float y = result.y * cosX - result.z * sinX;
+//   float z = result.y * sinX + result.z * cosX;
+//   result.y = y;
+//   result.z = z;
+// 
+//   float cosY = cos(angleY);
+//   float sinY = sin(angleY);
+//   float x = result.x * cosY + result.z * sinY;
+//   z = -result.x * sinY + result.z * cosY;
+//   result.x = x;
+//   result.z = z;
+// 
+//   float cosZ = cos(angleZ);
+//   float sinZ = sin(angleZ);
+//   x = result.x * cosZ - result.y * sinZ;
+//   y = result.x * sinZ + result.y * cosZ;
+//   result.x = x;
+//   result.y = y;
+// 
+//   // Translate back
+//   result.x += cx;
+//   result.y += cy;
+//   result.z += cz;
+// 
+//   return result;
+// }
+// 
+// float implicitLineEquation(const Vertex& p, const Vertex& p0, const Vertex& p1) {
+//   return (p0.y - p1.y) * p.x + (p1.x - p0.x) * p.y + (p0.x * p1.y - p1.x * p0.y);
+// }
+// 
+// Vertex getBarycentricCoords(const Vertex& A, const Vertex& B, const Vertex& C, const Vector3& P) {
+//   Vector3 v0 = B - A;
+//   Vector3 v1 = C - A;
+//   Vector3 v2 = P - A;
+// 
+//   float d00 = Vector3::dot(v0, v0);
+//   float d01 = Vector3::dot(v0, v1);
+//   float d11 = Vector3::dot(v1, v1);
+//   float d20 = Vector3::dot(v2, v0);
+//   float d21 = Vector3::dot(v2, v1);
+// 
+//   float denom = d00 * d11 - d01 * d01;
+// 
+//   float v = (d11 * d20 - d01 * d21) / denom;
+//   float w = (d00 * d21 - d01 * d20) / denom;
+//   float u = 1.0f - v - w;
+// 
+//   return Vector3(u, v, w);
+// }
+// 
+// void drawTopTriangle(Triangle t, Texture& tex, Image& img, const MPixelShader& pShader) {
+//   Vertex p0 = t.v0;
+//   Vertex p1 = t.v1; 
+//   Vertex p2 = t.v2;
+// 
+//   if (p1.x < p0.x) { std::swap(p0, p1); }
+// 
+//   int32_t height = p2.y - p0.y;
+//   if (height <= 0) {
+//     return;
+//   }
+// 
+//   float dxLeft  = static_cast<float>(p2.x - p0.x) / height;
+//   float dxRight = static_cast<float>(p2.x - p1.x) / height;
+// 
+//   float duLeft  = (p2.u - p0.u) / height;
+//   float dvLeft  = (p2.v - p0.v) / height;
+//   float duRight = (p2.u - p1.u) / height;
+//   float dvRight = (p2.v - p1.v) / height;
+// 
+//   float xs = p0.x;
+//   float xe = p1.x;
+//   float us = p0.u;
+//   float vs = p0.v;
+//   float ue = p1.u;
+//   float ve = p1.v;
+// 
+//   for (int y = p0.y; y <= p2.y; ++y) {
+//     int32_t left = static_cast<int32_t>(xs);
+//     int32_t right = static_cast<int32_t>(xe);
+//     if (left > right) {
+//       std::swap(left, right);
+//     }
+// 
+//     float u = us;
+//     float v = vs;
+// 
+//     float du = (ue - us) / (right - left + 1);
+//     float dv = (ve - vs) / (right - left + 1);
+// 
+//     for (int32_t x = std::max(0, left); x <= std::min(static_cast<int32_t>(img.m_width - 1), right); ++x) {
+//       // TODO: CHECK CLIPPING
+// 
+//       if (y > 0 && y < img.m_height) {
+//         Color pColor = pShader(u, v);
+// 
+//         img.setPixel(x, y, pColor);
+//       }
+//       u += du;
+//       v += dv;
+//     }
+// 
+//     xs += dxLeft;
+//     xe += dxRight;
+//     us += duLeft;
+//     vs += dvLeft;
+//     ue += duRight;
+//     ve += dvRight;
+// 
+//   }
+// }
+// 
+// void drawBottomTriangle(Triangle t, Texture& tex, Image& img, const MPixelShader& pShader) {
+//   Vertex p0 = t.v0;
+//   Vertex p1 = t.v1;
+//   Vertex p2 = t.v2;
+// 
+//   if (p2.x < p1.x) { std::swap(p1, p2); }
+// 
+//   int32_t height = p2.y - p0.y;
+//   if (height <= 0) {
+//     return;
+//   }
+// 
+//   float dxLeft  = static_cast<float>(p1.x - p0.x) / height;
+//   float dxRight = static_cast<float>(p2.x - p0.x) / height;
+// 
+//   float duLeft  = (p1.u - p0.u) / height;
+//   float dvLeft  = (p1.v - p0.v) / height;
+//   float duRight = (p2.u - p0.u) / height;
+//   float dvRight = (p2.v - p0.v) / height;
+// 
+//   float xs = p0.x;
+//   float xe = p0.x;
+//   float us = p0.u;
+//   float vs = p0.v;
+//   float ue = p0.u;
+//   float ve = p0.v;
+// 
+//   for (int y = p0.y; y <= p2.y; ++y) {
+//     int32_t left = static_cast<int32_t>(xs);
+//     int32_t right = static_cast<int32_t>(xe);
+//     if (left > right) {
+//       std::swap(left, right);
+//     }
+// 
+//     float u = us;
+//     float v = vs;
+// 
+//     float du = (ue - us) / (right - left + 1);
+//     float dv = (ve - vs) / (right - left + 1);
+// 
+//     for (int32_t x = std::max(0, left); x <= std::min(static_cast<int32_t>(img.m_width - 1), right); ++x) {
+//      
+//       // TODO: CHECK CLIPPING
+//       if (y > 0 && y < img.m_height) {
+//         Color pColor = pShader(u, v);
+// 
+//         img.setPixel(x, y, pColor);
+//       }
+//       u += du;
+//       v += dv;
+//     }
+// 
+//     xs += dxLeft;
+//     xe += dxRight;
+//     us += duLeft;
+//     vs += dvLeft;
+//     ue += duRight;
+//     ve += dvRight;
+// 
+//   }
+// 
+// }
+// 
+// void
+// fillTriangle(const Triangle& t, Texture& tex, Image& img, const Color& toColor, const MPixelShader& pShader) {
+//   // if all three triangle edges have different y, we split it into 2
+//   Vertex p0 = t.v0;
+//   Vertex p1 = t.v1;
+//   Vertex p2 = t.v2;
+// 
+//   if (p0.y > p1.y) { std::swap(p0, p1); }
+//   if (p0.y > p2.y) { std::swap(p0, p2); }
+//   if (p1.y > p2.y) { std::swap(p1, p2); }
+// 
+//   // Barycentric coordinate
+//   if (p1.y == p2.y) {
+//     drawBottomTriangle(Triangle(p0, p1, p2), tex, img, pShader);
+//   }
+//   else if (p0.y == p1.y) {
+//     drawTopTriangle(Triangle(p0, p1, p2), tex, img, pShader);
+//   }
+//   else {
+//     // Split the triangle into a flat-bottomed and a flat-topped triangle
+//     float tVal = static_cast<float>(p1.y - p0.y) / static_cast<float>(p2.y - p0.y);
+//     // int newX = static_cast<int32_t>(p0.x + tVal * (p2.x - p0.x));
+//     // 
+//     // // Calculate barycentric coordinates for the new vertex
+//     // Vector3 barycentric = getBarycentricCoords(p0, p1, p2, Vector3(newX, p1.y, 0));
+//     // 
+//     // float newU = barycentric.x * p0.u + barycentric.y * p1.u + barycentric.z * p2.u;
+//     // float newV = barycentric.x * p0.v + barycentric.y * p1.v + barycentric.z * p2.v;
+//     // 
+//     // Vertex newVtx(static_cast<float>(newX), p1.y, 0, newU, newV);
+//     // 
+//     // Triangle t1(p0, newVtx, p1);
+//     // Triangle t2(p1, newVtx, p2);
+// 
+//     int newX = p0.x + 
+//                static_cast<int32_t>(0.5f + 
+//                                     static_cast<float>(p1.y - p0.y) * 
+//                                     static_cast<float>(p2.x - p0.x) /
+//                                     static_cast<float>(p2.y - p0.y));
+//     
+//     float newU = p0.u + ((p1.y - p0.y) * ((p2.u - p0.u) / (p2.y - p0.y)));
+//     float newV = p0.v + ((p1.y - p0.y) * ((p2.v - p0.v) / (p2.y - p0.y)));
+//     Vertex newVtx(static_cast<float>(newX), p1.y, 0, newU, newV);
+//     
+//     Color c0 = Color::RED;
+//     Color c1 = Color::GREEN;
+//     Color c2 = Color::BLUE;
+//     
+//     Color nC = t.c0 + ((t.c2 - t.c0) * (p1.y - p0.y) / (p2.y - p0.y));
+//     
+//     Triangle t1(p0, newVtx, p1);
+//     Triangle t2(p1, newVtx, p2);
+// 
+//     t1.c0 = t.c0;
+//     t1.c1 = t.c1;
+//     t1.c2 = t.c1;
+// 
+//     t2.c0 = t.c1;
+//     t2.c1 = t.c2;
+//     t2.c2 = t.c2;
+// 
+//     drawBottomTriangle(t1, tex, img, pShader);
+//     drawTopTriangle(t2, tex, img, pShader);
+//   }
+// }
+// 
+// 
+// int main(int argc, char* argv[]) {
+// 
+// 
+//   
+// 
+// 
+// 
+//   std::cout << argv[0] << std::endl;
+// 
+//   Image sourceFile;
+//   Image destinyFile;
+//   String sourceFStr = "portrait.bmp";
+//   String resourcesPath = Utils::format("%s/../../resources",
+//                                        Path(argv[0]).parent_path().string().c_str());
+//   String binPath = Utils::format("%s", Path(argv[0]).parent_path().string().c_str());
+//   // String destFStr = "maiden.bmp";
+//   String sourceString1 = Utils::format("%s/%s", resourcesPath.c_str(), sourceFStr.c_str());
+//   String destinyString;
+//   // String sourceString2 = Utils::format("%s/%s",
+//   //                                      Path(argv[0]).parent_path().string().c_str(),
+//   //                                      destFStr.c_str());
+// 
+// //   sourceFile.decode(sourceString1);
+// //   destinyFile.create(3000, 2000, 24);
+// //   destinyFile.clear(Color::BLACK);
+// //   // destinyFile.decode(sourceString2);
+// // 
+// //   destinyFile.bitBlt(sourceFile, 
+// //                      Rect(0, 0, sourceFile.m_width, sourceFile.m_height),
+// //                      Rect(0, 0, destinyFile.m_width, destinyFile.m_height),
+// //                      eTextureMode::STRETCH);
+// //   destinyString = Utils::format("%s/res_stretch.bmp", binPath.c_str());
+// //   destinyFile.encode(destinyString, eImageFormat::BMP);
+// //   destinyFile.clear(Color::BLACK);
+// // 
+// //   destinyFile.bitBlt(sourceFile, 
+// //                      Rect(0, 0, sourceFile.m_width, sourceFile.m_height),
+// //                      Rect(0, 0, destinyFile.m_width, destinyFile.m_height),
+// //                      eTextureMode::CLAMP);
+// //   destinyString = Utils::format("%s/res_clamp.bmp", binPath.c_str());
+// //   destinyFile.encode(destinyString, eImageFormat::BMP);
+// //   destinyFile.clear(Color::BLACK);
+// // 
+// //   destinyFile.bitBlt(sourceFile, 
+// //                      Rect(0, 0, sourceFile.m_width, sourceFile.m_height),
+// //                      Rect(0, 0, sourceFile.m_width * 2, sourceFile.m_height),
+// //                      eTextureMode::MIRROR);
+// //   destinyString = Utils::format("%s/res_mirror.bmp", binPath.c_str());
+// //   destinyFile.encode(destinyString, eImageFormat::BMP);
+// //   destinyFile.clear(Color::BLACK);
+// // 
+// // 
+// //   destinyFile.bitBlt(sourceFile, 
+// //                      Rect(0, 0, sourceFile.m_width, sourceFile.m_height),
+// //                      Rect(0, 0, destinyFile.m_width, destinyFile.m_height),
+// //                      eTextureMode::REPEAT);
+// //   destinyString = Utils::format("%s/res_repeat.bmp", binPath.c_str());
+// //   destinyFile.encode(destinyString, eImageFormat::BMP);
+// //   destinyFile.clear(Color::BLACK);
+// // 
+// //   destinyFile.bitBlt(sourceFile, 
+// //                      Rect(0, 0, sourceFile.m_width, sourceFile.m_height),
+// //                      Rect(0, 0, sourceFile.m_width, sourceFile.m_height),
+// //                      eTextureMode::NONE);
+// //   destinyString = Utils::format("%s/res_none.bmp", binPath.c_str());
+// //   destinyFile.encode(destinyString, eImageFormat::BMP);
+// // 
+// //   Color filteredColor;
+// //   filteredColor.setUint(184, 184, 184);
+// //   destinyFile.filterPixel(Rect(0, 0, destinyFile.m_width, destinyFile.m_height), filteredColor);
+// //   destinyString = Utils::format("%s/res_filtered.bmp", binPath.c_str());
+// //   destinyFile.encode(destinyString, eImageFormat::BMP);
+// // 
+// //   destinyFile.clear(Color::BLACK);
+// 
+//   Image imgScreen;
+//   imgScreen.create(1920, 1080, 32);
+//   imgScreen.clear(Color::MISSING);
+// 
+//   Image imgTerrain;
+//   imgTerrain.decode(Utils::format("%s/terrain2.bmp", resourcesPath.c_str()));
+// 
+//   Image imgHorse;
+//   imgHorse.decode(Utils::format("%s/galina.bmp", resourcesPath.c_str()));
+// 
+//   imgScreen.bitBlt(imgTerrain, 
+//                    Rect(0, 0, imgTerrain.m_width, imgTerrain.m_height), 
+//                    Rect(0, 0, imgTerrain.m_width, imgTerrain.m_width));
+// 
+// 
+//   Texture horseTexture;
+//   horseTexture.setImage(imgHorse);
+//   
+//   // horseTexture.draw(imgScreen,
+//   //                   0,
+//   //                   0,
+//   //                   Rect(0, 0, imgHorse.m_width, imgHorse.m_height),
+//   //                   eTextureMode::WRAP, 
+//   //                   eBlendMode::ADDITIVE);
+// 
+//   // for (uint32_t i = 0; i < imgScreen.m_height; ++i) {
+//   //   for (uint32_t j = 0; j < imgScreen.m_width; ++j) {
+//   //     float u = static_cast<float>(j) / (imgScreen.m_width - 1);
+//   //     float v = static_cast<float>(i) / (imgScreen.m_height - 1);
+//   //     Pixel p = horseTexture.sample(u, v, eTextureMode::CLAMP, eSamplerFilter::LINEAR);
+//   //     imgScreen.setPixel(j, i, p);
+//   //   }
+//   // }
+// 
+//   imgScreen.bresenhamLine(-100, -100, 300, 20, Color::WHITE);
+// 
+//   //////////////////////////////////////////////////////////////////////////
+// 
+//   // Rotation center
+//   float cx = 0, cy = 0, cz = 0;
+// 
+//   // Rotation angles
+//   float angleX = 0, angleY = 0, angleZ = 0;
+// 
+// 
+//   Vertex p0 = Vertex(100, 100, 0, 0, 0);
+//   Vertex p1 = Vertex(100, 300, 0, 1, 0);
+//   Vertex p2 = Vertex(300, 100, 0, 0, 1);
+//   Vertex p3 = Vertex(300, 300, 0, 1, 1);
+// 
+//   Triangle t0(p0, p1, p2);
+//   Triangle t1(p1, p2, p3);
+// 
+//   Vector3 normal;
+// 
+//   Vector3 v0v1 = t0.v1 - t0.v0;
+//   Vector3 v0v2 = t0.v2 - t0.v0;
+// 
+//   normal = (v0v1 ^ v0v2).normalized();
+//   Vector3 view(0, 0, -1);
+//   float intensity = normal | view;
+// 
+//   //triangle is facing forwards
+//   if (intensity > 0) {
+// 
+//   }
+// 
+//   // imgScreen.bresenhamLine(t.v0.x, t.v0.y, t.v1.x, t.v1.y, Color::GREEN);
+//   // imgScreen.bresenhamLine(t.v1.x, t.v1.y, t.v2.x, t.v2.y, Color::GREEN);
+//   // imgScreen.bresenhamLine(t.v2.x, t.v2.y, t.v0.x, t.v0.y, Color::GREEN);
+// 
+//   MPixelShader uvPShader = [&horseTexture](float u, float v) {
+//     Color c(u, v, 0.0f, 1.0f); 
+//     return c;
+//   };
+// 
+//   MPixelShader texPShader = [&horseTexture](float u, float v) {
+//     Color c/*(u, v, 0.0f, 1.0f);*/ = horseTexture.sample(u, v, eTextureMode::CLAMP, eSamplerFilter::LINEAR);
+//     return c;
+//   };
+// 
+//   MPixelShader greyPShader = [&horseTexture](float u, float v) {
+//     Color c = horseTexture.sample(u, v, eTextureMode::CLAMP, eSamplerFilter::LINEAR);
+//     Vector3 grey(0.299f, 0.587f, 0.114f);
+//     Vector3 colorV(c.m_r, c.m_g, c.m_b);
+//     float  intensity = grey | colorV;
+// 
+//     // unsigned char rV = static_cast<unsigned char>(intensity * 255);
+// 
+//     c.setFloat(intensity, intensity, intensity);
+//     return c;
+//   };
+// 
+//   MPixelShader kernelPShader = [&horseTexture](float u, float v) {
+// 
+//     float kernelBlur[] = {
+//       0.0625,0.125,0.0625,
+//       0.125, 0.25, 0.125,
+//       0.0625,0.125,0.0625
+//     };
+// 
+//     float kernelBSobel[] = {
+//       -1,-2,-1,
+//       0, 0, 0,
+//       1,2,1
+//     };
+// 
+// 
+//     float kernelEmboss[] = {
+//       -2,-1, 0,
+//       -1, 1, 1,
+//       0,1,2
+//     };
+// 
+//     float kernelIdentity[] = {
+//       0,0, 0,
+//       0, 1, 0,
+//       0,0,0
+//     };
+// 
+//     float kernelLSoble[] = {
+//       1,0, -1,
+//       2,0, -2,
+//       1,0, -1
+//     };
+// 
+//     float kernelOutline[] = {
+//       -1, -1, -1,
+//       -1, 8, -1,
+//       -1, -1, -1
+//     };
+// 
+//     float kernelRSoble[] = {
+//       -1,0,1  ,
+//       -2,0,2  ,
+//       -1,0,1
+//     };
+// 
+//     float kernelSharpen[] = {
+//       0,-1,0  ,
+//       -1,5,-1  ,
+//       0,-1,0
+//     };
+// 
+//     
+//     float kernelTSobel[] = {
+//       1,2,1,
+//       0, 0, 0,
+//       -1,-2,-1
+//     };
+// 
+//     float* kernel = kernelTSobel;
+// 
+//     float du = 1.0f / horseTexture.m_img.m_width;
+//     float dv = 1.0f / horseTexture.m_img.m_height;
+// 
+//     Color c00 = horseTexture.sample(u - du, v - dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
+//     Color c01 = horseTexture.sample(u - du, v     , eTextureMode::CLAMP, eSamplerFilter::POINT);
+//     Color c02 = horseTexture.sample(u - du, v + dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
+//     Color c10 = horseTexture.sample(u     , v - dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
+//     Color c11 = horseTexture.sample(u     , v     , eTextureMode::CLAMP, eSamplerFilter::POINT);
+//     Color c12 = horseTexture.sample(u     , v + dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
+//     Color c20 = horseTexture.sample(u + du, v - dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
+//     Color c21 = horseTexture.sample(u + du, v     , eTextureMode::CLAMP, eSamplerFilter::POINT);
+//     Color c22 = horseTexture.sample(u + du, v + dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
+// 
+//     // Color avg = (c00 + c01 + c02 + c10 + c11 + c12 + c20 + c21 + c22) / 9.0f;
+// 
+//     Color finalVal = c00 * kernel[0] + c10 * kernel[1] + c20 * kernel[2] +
+//                      c01 * kernel[3] + c11 * kernel[4] + c21 * kernel[5] +
+//                      c02 * kernel[6] + c12 * kernel[7] + c22 * kernel[8];
+//     finalVal.saturate();
+//     float grey = finalVal.toGrey();
+// 
+//     return Color(grey, grey, grey);
+//   };
+// 
+// 
+//   MPixelShader normalPShader = [&horseTexture](float u, float v) {
+// 
+//     float kernelLSoble[] = {
+//       1,0, -1,
+//       2,0, -2,
+//       1,0, -1
+//     };
+// 
+//     float kernelTSobel[] = {
+//       1,2,1,
+//       0, 0, 0,
+//       -1,-2,-1
+//     };
+// 
+// 
+//     float du = 1.0f / horseTexture.m_img.m_width;
+//     float dv = 1.0f / horseTexture.m_img.m_height;
+// 
+//     Color c00 = horseTexture.sample(u - du, v - dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
+//     Color c01 = horseTexture.sample(u - du, v, eTextureMode::CLAMP, eSamplerFilter::POINT);
+//     Color c02 = horseTexture.sample(u - du, v + dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
+//     Color c10 = horseTexture.sample(u, v - dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
+//     Color c11 = horseTexture.sample(u, v, eTextureMode::CLAMP, eSamplerFilter::POINT);
+//     Color c12 = horseTexture.sample(u, v + dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
+//     Color c20 = horseTexture.sample(u + du, v - dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
+//     Color c21 = horseTexture.sample(u + du, v, eTextureMode::CLAMP, eSamplerFilter::POINT);
+//     Color c22 = horseTexture.sample(u + du, v + dv, eTextureMode::CLAMP, eSamplerFilter::POINT);
+// 
+//     // Color avg = (c00 + c01 + c02 + c10 + c11 + c12 + c20 + c21 + c22) / 9.0f;
+// 
+//     float* kernel = kernelLSoble;
+//     Color finalValX = c00 * kernel[0] + c10 * kernel[1] + c20 * kernel[2] +
+//                       c01 * kernel[3] + c11 * kernel[4] + c21 * kernel[5] +
+//                       c02 * kernel[6] + c12 * kernel[7] + c22 * kernel[8];
+// 
+//     kernel = kernelTSobel;
+//     Color finalValY = c00 * kernel[0] + c10 * kernel[1] + c20 * kernel[2] +
+//                       c01 * kernel[3] + c11 * kernel[4] + c21 * kernel[5] +
+//                       c02 * kernel[6] + c12 * kernel[7] + c22 * kernel[8];
+// 
+//     finalValX.saturate();
+//     finalValY.saturate();
+// 
+//     float sx = finalValX.toGrey();
+//     float sy = finalValY.toGrey();
+// 
+//     Color normal(sx, sy, 1, 1);
+// 
+//     return normal;
+//   };
+// 
+//   fillTriangle(t0, horseTexture, imgScreen, Color::CYAN, uvPShader);
+//   fillTriangle(t1, horseTexture, imgScreen, Color::CYAN, uvPShader);
+// 
+//   destinyString = Utils::format("%s/res_horse.bmp", binPath.c_str());
+//   imgScreen.encode(destinyString);
+// 
+// 
+// 
+//   // Initialize SDL3
+//   if (!SDL_Init(SDL_INIT_VIDEO)) {
+//     std::cerr << "SDL_Init Error: " << SDL_GetError() << std::endl;
+//     return -1;
+//   }
+// 
+//   // Create an SDL3 window
+//   SDL_Window* window = SDL_CreateWindow("SDL3 Window", 1920, 1080, SDL_WINDOW_OPENGL);
+//   if (!window) {
+//     std::cerr << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
+//     SDL_Quit();
+//     return -1;
+//   }
+// 
+//   // Create an SDL3 renderer
+//   SDL_Renderer* renderer = SDL_CreateRenderer(window, nullptr);
+//   if (!renderer) {
+//     std::cerr << "SDL_CreateRenderer Error: " << SDL_GetError() << std::endl;
+//     SDL_DestroyWindow(window);
+//     SDL_Quit();
+//     return -1;
+//   }
+// 
+//   SDL_Texture* sdlTexture = nullptr;
+// 
+//   //////////////////////////////////////////////////////////////////////////
+//   std::vector<Vertex> edges = {
+//     // ftl
+//     Vertex(500, 500, 0), 
+// 
+//     // ftr
+//     Vertex(800, 500, 0), 
+// 
+//     // fbl
+//     Vertex(500, 800, 0),
+// 
+//     // fbr
+//     Vertex(800, 800, 0),
+// 
+//     // btl
+//     Vertex(500,800, -300),
+//     // btr
+//     Vertex(500,500, -300),
+// 
+//     // bbl
+//     Vertex(800,800, -300), 
+// 
+//     // bbr
+//     Vertex(800,500, -300) 
+//   };
+//   
+// 
+//   // Cube faces (each face is 2 triangles)
+//   // 
+//   // 
+//   //////////////////////////////////////////////////////////////////////////
+//   // TODO: SIMPLIFY THIS
+// 
+//   std::vector<Triangle> cubeFaces = {
+//     // Back
+//     {Vertex(800,500,-300, 0, 0),Vertex(500,500,-300, 1, 0), Vertex(800,800,-300, 0, 1)},
+//     {Vertex(500,500,-300, 1, 0),Vertex(500,800,-300, 1, 1), Vertex(800,800,-300, 0, 1)},
+// 
+//     // Front
+//     {Vertex(500,500, 0, 0, 0),Vertex(800,500, 0, 1, 0), Vertex(500,800, 0, 0, 1)},
+//     {Vertex(800,500, 0, 1, 0),Vertex(800,800, 0, 1, 1), Vertex(500,800, 0, 0, 1)},
+//     
+//     // Top Side
+//     {Vertex(500,500, -300, 0, 0),Vertex(800,500, -300, 1, 0), Vertex(500,500, 0, 0, 1)},
+//     {Vertex(800,500, -300, 1, 0),Vertex(800,500, 0, 1, 1), Vertex(500,500, 0, 0, 1)},
+// 
+//     // Bottom Side
+//     {Vertex(500, 800, 0, 0, 0),Vertex(800,800, 0, 1, 0), Vertex(500,800, -300, 0, 1)},
+//     {Vertex(800, 800, 0, 1, 0),Vertex(800,800, -300, 1, 1), Vertex(500,800, -300, 0, 1)},
+// 
+//     // Left Side
+//     {Vertex(500,500,-300, 0, 0),Vertex(500,500, 0, 1, 0), Vertex(500,800,-300, 0, 1)},
+//     {Vertex(500,500, 0, 1, 0),Vertex(500,800, 0, 1, 1), Vertex(500,800,-300, 0, 1)},
+//     
+//     // Right Side
+//     {Vertex(800,500, -300, 1, 0),Vertex(800,800, -300, 1, 1), Vertex(800,800, 0, 0, 1)},
+//     {Vertex(800,500, 0, 0, 0),Vertex(800,500, -300, 1, 0), Vertex(800,800, 0, 0, 1)}
+// 
+//   };
+// 
+//   //////////////////////////////////////////////////////////////////////////
+// 
+// 
+//   // Main loop
+//   bool running = true;
+//   while (running) {
+//     imgScreen.clear();
+//     SDL_Event event;
+//     while (SDL_PollEvent(&event)) {
+//       if (event.type == SDL_EVENT_QUIT) {
+//         running = false;
+//       }
+//     }
+// 
+//     // Rotate the cube
+//     angleX += 0.1f;
+//     angleY += 0.1f;
+//     angleZ += 0.1f;
+// 
+//     for (const auto& tri : cubeFaces) {
+//       Triangle rotatedTri(
+//         rotateVertex(tri.v0, angleX, angleY, angleZ, 650, 650, -150),
+//         rotateVertex(tri.v1, angleX, angleY, angleZ, 650, 650, -150),
+//         rotateVertex(tri.v2, angleX, angleY, angleZ, 650, 650, -150)
+//       );
+// 
+//       v0v1 = rotatedTri.v1 - rotatedTri.v0;
+//       v0v2 = rotatedTri.v2 - rotatedTri.v0;
+// 
+//       normal = Vector3::cross(v0v1, v0v2);
+//       normal = normal.normalized();
+//       intensity = normal | view;
+//       //triangle is facing forwards
+//       if (intensity > 0) {
+//         // Draw the triangle
+//         fillTriangle(rotatedTri, horseTexture, imgScreen, Color::CYAN, texPShader);
+//       }
+// 
+//     }
+// 
+//     sdlTexture = SDL_CreateTexture(renderer,
+//                                    SDL_PIXELFORMAT_RGBA128_FLOAT,
+//                                    SDL_TEXTUREACCESS_STREAMING,
+//                                    imgScreen.m_width,
+//                                    imgScreen.m_height);
+// 
+//     // Clear screen with a color
+//     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+//     SDL_RenderClear(renderer);
+// 
+//     SDL_Surface* surface = nullptr;
+// 
+//     imgScreen.setPixel(Utils::getRandom(100), 
+//                        Utils::getRandom(100),
+//                        Color::BLACK);
+// 
+//     // Add something to create pixels randomly
+// 
+//     SDL_Surface* imgSurface = SDL_CreateSurfaceFrom(imgScreen.m_width, 
+//                                                     imgScreen.m_height, 
+//                                                     SDL_PIXELFORMAT_RGBA128_FLOAT,
+//                                                     imgScreen.m_pixels.data(), 
+//                                                     imgScreen.m_width * 16); // pitch is width * bytes per pixel
+// 
+//     if (SDL_LockTextureToSurface(sdlTexture, nullptr, &surface)) {
+//       SDL_BlitSurface(imgSurface, nullptr, surface, nullptr);
+//       // SDL_Rect r;
+//       // SDL_FillSurfaceRect(surface,
+//       //                     nullptr,
+//       //                     SDL_MapRGB(SDL_GetPixelFormatDetails(surface->format), 
+//       //                                nullptr, 0, 0, 0));
+//       // 
+//       // r.w = sdlTexture->w;
+//       // r.h = sdlTexture->h;
+//       // r.x = 0;
+//       // r.y = static_cast<int>((static_cast<float>(sdlTexture->)));
+// 
+//       // Copy to GPU
+//       SDL_UnlockTexture(sdlTexture);
+//     }
+//     SDL_DestroySurface(imgSurface);
+// 
+//     SDL_FRect dstRect = { 0, 0, imgScreen.m_width, imgScreen.m_height };
+//     SDL_RenderTexture(renderer, sdlTexture, nullptr, &dstRect);
+// 
+//     // Present the frame
+//     SDL_RenderPresent(renderer);
+//   }
+// 
+//   // Cleanup
+//   SDL_DestroyRenderer(renderer);
+//   SDL_DestroyWindow(window);
+//   SDL_Quit();
+// 
+// 
+// 
+//   return 0;
+// }
+// 

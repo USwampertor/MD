@@ -32,7 +32,10 @@ public:
                 D3D11_USAGE usage = D3D11_USAGE_DEFAULT,
                 uint32_t bindFlags = D3D11_BIND_SHADER_RESOURCE, 
                 uint32_t cpuAccessFlags = 0, 
-                uint32_t mipFlags = 1);
+                uint32_t mipFlags = 1,
+                ID3D11ShaderResourceView** ppSRV = nullptr,
+                ID3D11RenderTargetView** ppRTV = nullptr,
+                ID3D11DepthStencilView** ppDSV = nullptr);
 
 
   UPtr<VertexShader>

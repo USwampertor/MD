@@ -8,7 +8,7 @@ namespace MD
 class Color
 {
 public:
-
+  
   Color() = default;
 
   ~Color() = default;
@@ -88,6 +88,12 @@ public:
     return (0.299f * m_r + 0.587f * m_g + 0.114f * m_b);
   }
 
+  float*
+  toFloat4() {
+    float clearColor[] = { m_r, m_g, m_b, m_a };
+    return clearColor;
+  }
+
   static const Color AZURE;
   static const Color BLACK;
   static const Color BLUE;
@@ -117,7 +123,6 @@ public:
 };
 
 
-using MPixelShader = std::function<Color(float, float)>;
 
 
 }

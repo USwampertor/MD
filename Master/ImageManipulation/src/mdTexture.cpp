@@ -2,6 +2,14 @@
 
 namespace MD
 {
+
+Texture::~Texture() {
+  SAFE_RELEASE(m_pTexture);
+  SAFE_RELEASE(m_pSRV);
+  SAFE_RELEASE(m_pRTV);
+  SAFE_RELEASE(m_pDSV);
+}
+
 void 
 Texture::adjustTextureAddress(float& u,
                               float& v,
@@ -130,5 +138,30 @@ void
 Texture::setImage(const Image& img) {
   m_img = img;
 }
+
+void
+Texture::setImage(const Image& img, const UPtr<GraphicsAPI>& pGraphicsAPI) {
+  setImage(img);
+  
+  m_pTexture = pGraphicsAPI->createTexture(m_img.m_width, 
+                                           m_img.m_height, 
+                                           DXGI_FORMAT_R32G32B32A32_FLOAT,
+                                           D3D11_USAGE_DEFAULT,
+                                           D3D11_BIND_SHADER_RESOURCE,
+                                           0,
+                                           1,
+                                           &m_pSRV);
+  if (m_pTexture) {
+    pGraphicsAPI->m_pDeviceContext->UpdateSubresource1(m_pTexture, 
+                                                       0, 
+                                                       nullptr, 
+                                                       reinterpret_cast<void*>(m_img.m_pixels.data()), 
+                                                       m_img.m_width * 16, // PITCH
+                                                       0, 
+                                                       0);
+    
+  }
+}
+
 
 }
