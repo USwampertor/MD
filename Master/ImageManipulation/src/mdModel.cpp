@@ -120,7 +120,7 @@ Model::loadFromFile(const Path& filePath, const UPtr<GraphicsAPI>& pGraphicsAPI)
 
         unsigned int vertexIndex = std::stoi(faceIndex[0]) - 1;
         unsigned int uvIndex = std::stoi(faceIndex[1]) - 1;
-        unsigned int normIndex = std::stoi(faceIndex[1]) - 2;
+        unsigned int normIndex = std::stoi(faceIndex[2]) - 1;
 
         FaceVertex faceVertex;
 

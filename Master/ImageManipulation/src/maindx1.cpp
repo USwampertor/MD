@@ -116,7 +116,7 @@ int main(int argc, char* argv[]) {
   Vector<D3D11_INPUT_ELEMENT_DESC> inputDescs = {
     { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,   D3D11_INPUT_PER_VERTEX_DATA, 0 },
     { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
-    { "COLOR",    0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 24,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 24,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
     { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 40,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
   };
 
@@ -146,13 +146,13 @@ int main(int argc, char* argv[]) {
   g_pConstantBuffer = g_pGraphicsAPI->createConstantBuffer(matrixData);
 
   Model newObject;
-  newObject.loadFromFile(Path(resourceDir.string() + "/teapot.obj"), g_pGraphicsAPI);
+  newObject.loadFromFile(Path(resourceDir.string() + "/rex_norm.obj"), g_pGraphicsAPI);
 
   Model floorObject;
   floorObject.loadFromFile(Path(resourceDir.string() + "/disc.obj"), g_pGraphicsAPI);
 
   Image newImage;
-  newImage.decode(Path(resourceDir.string() + "/teapot_tex.bmp"));
+  newImage.decode(Path(resourceDir.string() + "/rex_tex.bmp"));
   Texture newTexture;
   newTexture.setImage(newImage, g_pGraphicsAPI);
 
