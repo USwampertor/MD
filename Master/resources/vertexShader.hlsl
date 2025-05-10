@@ -35,7 +35,7 @@ PixelInput vertex_main(VertexInput Input, uint vertex_index : SV_VertexID) {
   Output.position = mul(Output.position, World);
   Output.position = mul(Output.position, View);
   Output.position = mul(Output.position, Projection);
-  
+  Output.normal = mul(float4(Input.normal, 0), World).xyz;
   Output.color = Input.color;
   Output.texCoord = Input.texCoord;
   

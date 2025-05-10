@@ -271,6 +271,24 @@ int main(int argc, char* argv[]) {
 
       if (event.type == SDL_EVENT_KEY_DOWN) {
         
+        if (event.key.key == SDLK_1) {
+          auto pVertexShader = g_pGraphicsAPI->createVertexShader(Path(resourceDir.string() + "/vertexShader.hlsl"),
+                                                                  "vertex_main");
+          if (pVertexShader) {
+            g_pVertexShader = std::move(pVertexShader);
+          }
+          auto pPixelShader = g_pGraphicsAPI->createPixelShader(Path(resourceDir.string() + "/pixelShader.hlsl"),
+                                                                "pixel_main");
+          if (pVertexShader) {
+            g_pPixelShader = std::move(pPixelShader);
+          }
+          auto pReflectPShader = g_pGraphicsAPI->createPixelShader(Path(resourceDir.string() + "/reflectionPShader.hlsl"),
+                                                                    "pixel_main");
+          if (pReflectPShader) {
+            g_pReflectPShader = std::move(pReflectPShader);
+          }
+        }
+
         if (event.key.key == SDLK_R) {
           g_pCamera->setLookAt(Vector3(0, 0, -30), Vector3(0, 0, 0), Vector3(0, 1, 0));
 
@@ -424,11 +442,11 @@ int main(int argc, char* argv[]) {
     rot1.rotateY(-rotationAngle);
 
     Matrix4 potScale = Matrix4::IDENTITY;
-    potScale.scale(Vector3(.1, .1, .1));
+    potScale.scale(Vector3(1, 1, 1));
 
     //////////////////////////////////////////////////////////////////////////
 
-    matrices.world = pos1 * rot0 * potScale;
+    matrices.world = potScale * rot0 * pos1;
     matrices.world.transpose();
     matrixData.clear();
     matrixData.resize(sizeof(matrices));
@@ -480,7 +498,7 @@ int main(int argc, char* argv[]) {
     // Modify data so model is reflected
 
     Matrix4 invertedScale = Matrix4::IDENTITY;
-    invertedScale.scale(Vector3(.1, -.1, .1));
+    invertedScale.scale(Vector3(1, -1, 1));
 
     matrices.world = invertedScale * rot0 * pos2;
     matrices.world.transpose();

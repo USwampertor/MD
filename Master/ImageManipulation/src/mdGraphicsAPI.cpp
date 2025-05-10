@@ -150,7 +150,11 @@ GraphicsAPI::GraphicsAPI(void* pWindowHandle) {
 
 
 GraphicsAPI::~GraphicsAPI() {
-
+  SAFE_RELEASE(m_pBackBufferDSV);
+  SAFE_RELEASE(m_pBackBufferRTV);
+  SAFE_RELEASE(m_pSwapChain);
+  SAFE_RELEASE(m_pDeviceContext);
+  SAFE_RELEASE(m_pDevice);
 }
 
 

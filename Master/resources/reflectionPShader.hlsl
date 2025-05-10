@@ -5,12 +5,23 @@ SamplerState samPoint : register(s0);
 SamplerState samLinear : register(s1);
 SamplerState samAniso : register(s2);
 
+struct VertexInput
+{
+  float3 position : POSITION;
+  float3 normal : NORMAL0;
+  float4 color : COLOR0;
+  float2 texCoord : TEXCOORD0;
+};
+
 struct PixelInput
 {
   float4 position : SV_POSITION;
   float4 color : TEXCOORD0;
+  float3 normal : TEXCOORD2;
   float2 texCoord : TEXCOORD1;
+  float3 posW : TEXCOORD3;
 };
+
 
 float4 pixel_main(PixelInput Input) : SV_TARGET {
   
