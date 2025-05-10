@@ -13,11 +13,13 @@ struct MODEL_VERTEX
 {
   MODEL_VERTEX() {
     position = Vector3::ZERO;
+    normal = Vector3::ZERO;
     c = Color::CLEAR;
     u = v = 0.0f;
   }
 
   Vector3 position;
+  Vector3 normal;
   Color c;
   float u;
   float v;

@@ -115,8 +115,9 @@ int main(int argc, char* argv[]) {
 
   Vector<D3D11_INPUT_ELEMENT_DESC> inputDescs = {
     { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,   D3D11_INPUT_PER_VERTEX_DATA, 0 },
-    { "COLOR",    0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
-    { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 28,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "COLOR",    0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 24,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 40,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
   };
 
   g_pInputLayout = g_pGraphicsAPI->createInputLayout(inputDescs, g_pVertexShader);
@@ -124,71 +125,6 @@ int main(int argc, char* argv[]) {
   if (!g_pInputLayout) {
     return -1;
   }
-
-  /*
-  MODEL_VERTEX cube[] = {
-    {Vector3( 0.0f,  0.5f, 0.0f), Color::RED},     //     o
-    {Vector3( 0.5f, -0.5f, 0.0f), Color::GREEN},    //        o
-    {Vector3(-0.5f, -0.5f, 0.0f), Color::BLUE}    //  o     
-  };
-  */
-
-//   MODEL_VERTEX cube[] = {
-//     {Vector3(-1.0f,  1.0f, -1.0f), Color::GREEN},
-//     {Vector3( 1.0f,  1.0f, -1.0f), Color::GREEN},
-//     {Vector3( 1.0f,  1.0f,  1.0f), Color::GREEN},
-//     {Vector3(-1.0f,  1.0f,  1.0f), Color::GREEN},
-//     {Vector3(-1.0f, -1.0f, -1.0f), Color::GREEN},
-//     {Vector3( 1.0f, -1.0f, -1.0f), Color::GREEN},
-//     {Vector3( 1.0f, -1.0f,  1.0f), Color::GREEN},
-//     {Vector3(-1.0f, -1.0f,  1.0f), Color::GREEN},
-//     {Vector3(-1.0f, -1.0f,  1.0f), Color::RED},
-//     {Vector3(-1.0f, -1.0f, -1.0f), Color::RED},
-//     {Vector3(-1.0f,  1.0f, -1.0f), Color::RED},
-//     {Vector3(-1.0f,  1.0f,  1.0f), Color::RED},
-//     {Vector3( 1.0f, -1.0f,  1.0f), Color::RED},
-//     {Vector3( 1.0f, -1.0f, -1.0f), Color::RED},
-//     {Vector3( 1.0f,  1.0f, -1.0f), Color::RED},
-//     {Vector3( 1.0f,  1.0f,  1.0f), Color::RED},
-//     {Vector3(-1.0f, -1.0f,  1.0f), Color::BLUE},
-//     {Vector3( 1.0f, -1.0f,  1.0f), Color::BLUE},
-//     {Vector3( 1.0f,  1.0f,  1.0f), Color::BLUE},
-//     {Vector3(-1.0f,  1.0f,  1.0f), Color::BLUE},
-//     {Vector3(-1.0f, -1.0f, -1.0f), Color::BLUE},
-//     {Vector3( 1.0f, -1.0f, -1.0f), Color::BLUE},
-//     {Vector3( 1.0f,  1.0f, -1.0f), Color::BLUE},
-//     {Vector3(-1.0f,  1.0f, -1.0f), Color::BLUE},
-// 
-//   };
-//   
-//   Vector<char> vertexData;
-//   vertexData.resize(sizeof(cube));
-//   memcpy(vertexData.data(), cube, sizeof(cube));
-// 
-//   g_pVertexBuffer = g_pGraphicsAPI->createVertexBuffer(vertexData);
-// 
-//   if (!g_pVertexBuffer) {
-//     return -1;
-//   }
-// 
-//   unsigned short indices[] = {
-//      3, 1, 0,  2, 1, 3,
-//      6, 4, 5,  7, 4, 6,
-//     11, 9, 8, 10, 9,11,
-//     14,12,13, 15,12,14,
-//     19,17,16, 18,17,19,
-//     22,20,21, 23,20,22
-//   };
-// 
-//   Vector<char> indexData;
-//   indexData.resize(sizeof(indices));
-//   memcpy(indexData.data(), indices, sizeof(indices));
-// 
-//   g_pIndexBuffer = g_pGraphicsAPI->createIndexBuffer(indexData);
-// 
-//   if (!g_pVertexBuffer) {
-//     return -1;
-//   }
 
   float pi = 3.141592653;
   g_pCamera = new Camera();

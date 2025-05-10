@@ -25,7 +25,7 @@ cbuffer MatrixCollection : register(b0)
   float4x4 Projection;
 }
 
-PixelInput vertex_main(VertexInput Input) {
+PixelInput vertex_main(VertexInput Input, uint vertex_index : SV_VertexID) {
   PixelInput Output;
   Output.position = float4(Input.position, 1);
   

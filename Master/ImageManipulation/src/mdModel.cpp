@@ -17,7 +17,8 @@ struct FaceVertex
 {
   int vertexIndex;
   int uvIndex;
-  bool operator==(const FaceVertex& rhs) const { return vertexIndex == rhs.vertexIndex && uvIndex == rhs.uvIndex; }
+  int normalIndex;
+  bool operator==(const FaceVertex& rhs) const { return vertexIndex == rhs.vertexIndex && uvIndex == rhs.uvIndex && normalIndex == rhs.normalIndex; }
   bool operator!=(const FaceVertex& rhs) const { return !(*this == rhs); }
 };
 
@@ -25,7 +26,8 @@ struct FaceVertex_Hash {
   std::size_t operator()(const FaceVertex& vertex) const {
     std::size_t h1 = std::hash<int>()(vertex.vertexIndex);
     std::size_t h2 = std::hash<int>()(vertex.uvIndex);
-    return h1 ^ (h2 << 1);
+    std::size_t h3 = std::hash<int>()(vertex.normalIndex);
+    return h1 ^ (h2 << 1) ^ (h3 << 2);
   }
 };
 
@@ -71,6 +73,8 @@ Model::loadFromFile(const Path& filePath, const UPtr<GraphicsAPI>& pGraphicsAPI)
   Vector<unsigned short> indices;
   Vector<Vector3> tmpPos;
   Vector<float2> tmpUV;
+  Vector<Vector3> tmpNorm;
+
   UnorderedMap<FaceVertex, unsigned short, FaceVertex_Hash> tmpMap;
   
   int vt_index = 0; 
@@ -97,6 +101,16 @@ Model::loadFromFile(const Path& filePath, const UPtr<GraphicsAPI>& pGraphicsAPI)
 
       // ++vt_index;
     }
+    else if (tokens[0] == "vn") {
+
+      Vector3 norm;
+      norm.x = std::stof(tokens[1]);
+      norm.y = std::stof(tokens[2]);
+      norm.z = std::stof(tokens[3]);
+      tmpNorm.push_back(norm);
+
+      // ++vt_index;
+    }
     else if (tokens[0] == "f") {
 
       Vector<unsigned short> faceIndices;
@@ -106,12 +120,13 @@ Model::loadFromFile(const Path& filePath, const UPtr<GraphicsAPI>& pGraphicsAPI)
 
         unsigned int vertexIndex = std::stoi(faceIndex[0]) - 1;
         unsigned int uvIndex = std::stoi(faceIndex[1]) - 1;
-
+        unsigned int normIndex = std::stoi(faceIndex[1]) - 2;
 
         FaceVertex faceVertex;
 
         faceVertex.vertexIndex = vertexIndex;
         faceVertex.uvIndex = uvIndex;
+        faceVertex.normalIndex = normIndex;
 
         // MODEL_VERTEX vertex;
         // vertex.position = tmpPos[vertexIndex];
@@ -127,7 +142,7 @@ Model::loadFromFile(const Path& filePath, const UPtr<GraphicsAPI>& pGraphicsAPI)
           vertex.c = Color::MISSING;
           vertex.u = tmpUV[faceVertex.uvIndex].u;
           vertex.v = tmpUV[faceVertex.uvIndex].v;
-
+          vertex.normal = tmpNorm[faceVertex.normalIndex];
           vertices.push_back(vertex);
         }
 

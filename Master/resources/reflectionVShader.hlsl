@@ -7,6 +7,7 @@ SamplerState samAniso   : register(s2);
 struct VertexInput
 {
   float3 position : POSITION;
+  float3 normal : NORMAL;
   float4 color : COLOR0;
   float2 texCoord : TEXCOORD0;
 };
