@@ -173,6 +173,7 @@
     <ClCompile Include="src\mdShader.cpp" />
     <ClCompile Include="src\mdTexture.cpp" />
     <ClCompile Include="src\mdTriangle.cpp" />
+    <ClCompile Include="src\mdVector2.cpp" />
     <ClCompile Include="src\mdVector3.cpp" />
     <ClCompile Include="src\mdVertex.cpp" />
   </ItemGroup>
@@ -189,6 +190,7 @@
     <ClInclude Include="include\mdShader.h" />
     <ClInclude Include="include\mdTexture.h" />
     <ClInclude Include="include\mdTriangle.h" />
+    <ClInclude Include="include\mdVector2.h" />
     <ClInclude Include="include\mdVector3.h" />
     <ClInclude Include="include\mdVertex.h" />
     <ClInclude Include="include\mdWindow.h" />

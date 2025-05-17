@@ -20,6 +20,7 @@ struct MODEL_VERTEX
 
   Vector3 position;
   Vector3 normal;
+  Vector3 tangent;
   Color c;
   float u;
   float v;
@@ -80,8 +81,15 @@ public:
 
   bool
   loadFromFile(const Path& filePath, const UPtr<GraphicsAPI>& pGraphicsAPI);
+  
+  void
+  computeTangentSpance();
 
   Vector<Mesh> m_meshes;
+
+  Vector<MODEL_VERTEX> m_vertices;
+
+  Vector<unsigned short> m_indices;
 
   UPtr<GraphicsBuffer> m_pVertexBuffer;
   UPtr<GraphicsBuffer> m_pIndexBuffer;

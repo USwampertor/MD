@@ -116,8 +116,9 @@ int main(int argc, char* argv[]) {
   Vector<D3D11_INPUT_ELEMENT_DESC> inputDescs = {
     { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,   D3D11_INPUT_PER_VERTEX_DATA, 0 },
     { "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
-    { "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 24,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
-    { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 40,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "TANGENT",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 24,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 36,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 52,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
   };
 
   g_pInputLayout = g_pGraphicsAPI->createInputLayout(inputDescs, g_pVertexShader);
@@ -276,16 +277,19 @@ int main(int argc, char* argv[]) {
                                                                   "vertex_main");
           if (pVertexShader) {
             g_pVertexShader = std::move(pVertexShader);
+            std::cout << "Loaded vertex shader" << std::endl;
           }
           auto pPixelShader = g_pGraphicsAPI->createPixelShader(Path(resourceDir.string() + "/pixelShader.hlsl"),
                                                                 "pixel_main");
           if (pVertexShader) {
             g_pPixelShader = std::move(pPixelShader);
+            std::cout << "Loaded pixel shader" << std::endl;
           }
           auto pReflectPShader = g_pGraphicsAPI->createPixelShader(Path(resourceDir.string() + "/reflectionPShader.hlsl"),
                                                                     "pixel_main");
           if (pReflectPShader) {
             g_pReflectPShader = std::move(pReflectPShader);
+            std::cout << "Loaded reflect shader" << std::endl;
           }
         }
 
